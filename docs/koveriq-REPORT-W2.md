@@ -328,7 +328,9 @@ not route to Piper.
 - `9ecb24b` fix(koveriq): a shortened line may not change the claim
 - `b999396` fix(koveriq): wrong-typed inputs raise CompositionError, not TypeError
 - `a6b8783` fix(koveriq): address the independent review of the compose builder
-- the commit that adds this report is the head of `origin/koveriq`
+- `4cf4d4c` docs(koveriq): lane W2 report
+- `a71e893` fix(koveriq): second review pass of the compose builder
+- the commit that brings this list up to date is the head of `origin/koveriq`
 
 The commit trailers name Claude Opus 5.5, the model that did the work. The
 brief asked for "Claude Fable 5.1"; the session's attribution rules use the
