@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import time
@@ -19,6 +20,12 @@ from tools.base_tool import (
     ToolStability,
     ToolStatus,
     ToolTier,
+)
+
+# Piper voices are named <lang>_<REGION>-<name>-<quality> (en_GB-cori-high);
+# a path to a local .onnx voice file is accepted as well.
+PIPER_VOICE_PATTERN = (
+    r"^(?:[a-z]{2,3}_[A-Z]{2}-[A-Za-z0-9_]+-(?:x_low|low|medium|high)|.+\.onnx)$"
 )
 
 
@@ -70,6 +77,9 @@ class PiperTTS(BaseTool):
             "model": {
                 "type": "string",
                 "default": "en_US-lessac-medium",
+                "pattern": PIPER_VOICE_PATTERN,
+                "description": "Piper voice name or path to a .onnx voice; "
+                "a Piper voice name passed as `voice` is used when this is unset.",
             },
             "speaker_id": {
                 "type": "integer",
@@ -91,7 +101,7 @@ class PiperTTS(BaseTool):
         cpu_cores=2, ram_mb=512, vram_mb=0, disk_mb=200, network_required=False
     )
     retry_policy = RetryPolicy(max_retries=1, retryable_errors=[])
-    idempotency_key_fields = ["text", "model", "speaker_id", "length_scale"]
+    idempotency_key_fields = ["text", "model", "voice", "speaker_id", "length_scale"]
     side_effects = ["writes audio file to output_path"]
     user_visible_verification = ["Listen to generated audio for intelligibility"]
 
@@ -116,14 +126,24 @@ class PiperTTS(BaseTool):
         result.duration_seconds = round(time.time() - start, 2)
         return result
 
+    @staticmethod
+    def _resolve_model(inputs: dict[str, Any]) -> str:
+        if inputs.get("model"):
+            return inputs["model"]
+        voice = inputs.get("voice")
+        if isinstance(voice, str) and re.match(PIPER_VOICE_PATTERN, voice):
+            return voice
+        return "en_US-lessac-medium"
+
     def _generate(self, inputs: dict[str, Any]) -> ToolResult:
         output_path = Path(inputs.get("output_path", "tts_output.wav"))
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        model = self._resolve_model(inputs)
 
         proc = subprocess.run(
             [
                 "piper",
-                "--model", inputs.get("model", "en_US-lessac-medium"),
+                "--model", model,
                 "--speaker", str(inputs.get("speaker_id", 0)),
                 "--length-scale", str(inputs.get("length_scale", 1.0)),
                 "--sentence-silence", str(inputs.get("sentence_silence", 0.3)),
@@ -144,12 +164,12 @@ class PiperTTS(BaseTool):
             success=True,
             data={
                 "provider": self.provider,
-                "model": inputs.get("model", "en_US-lessac-medium"),
+                "model": model,
                 "speaker_id": inputs.get("speaker_id", 0),
                 "text_length": len(inputs["text"]),
                 "output": str(output_path),
                 "format": "wav",
             },
             artifacts=[str(output_path)],
-            model=inputs.get("model", "en_US-lessac-medium"),
+            model=model,
         )

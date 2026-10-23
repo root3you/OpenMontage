@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 
 def filter_explicit_route(inputs, candidates):
     tool_name = inputs.get("preferred_tool")
@@ -16,12 +18,17 @@ def filter_explicit_route(inputs, candidates):
         if model:
             props = tool.input_schema.get("properties", {})
             models = set()
+            patterns = []
             for field in ("model", "model_id", "model_name"):
                 models.update(props.get(field, {}).get("enum", []))
+                # An open model vocabulary (e.g. Piper voice names) is declared
+                # as a JSON-schema pattern instead of an enum.
+                if props.get(field, {}).get("pattern"):
+                    patterns.append(props[field]["pattern"])
             models.update(getattr(tool, "_MODELS", {}))
             models.update(getattr(tool, "_MODEL_ALIASES", {}))
             models.update(tool.get_info().get("model_catalog", {}))
-            if model not in models:
+            if model not in models and not any(re.search(p, model) for p in patterns):
                 continue
         operation = inputs.get("generation_mode") or inputs.get("operation")
         routes = getattr(tool, "routes", None) or getattr(tool, "models", None)
