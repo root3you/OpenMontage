@@ -123,3 +123,44 @@ def test_probe_and_loudness_parse_real_tool_output(tmp_path, monkeypatch) -> Non
     probe = runner._probe(tmp_path / "x.mp4")
     assert probe == {"durationSeconds": 38.5, "width": 1920, "height": 1080, "fps": 30.0, "videoCodec": "h264", "audioCodec": "aac"}
     assert runner._loudness(tmp_path / "x.mp4") == -16.2
+
+
+def test_check_collects_errors_and_warnings_from_every_section(monkeypatch, tmp_path) -> None:
+    report = {
+        "ok": False,
+        "lint": {"ok": True, "findings": []},
+        "layout": {
+            "ok": False,
+            "findings": [
+                {"severity": "error", "code": "caption_zone_collision", "selector": "#sc2-head", "message": "overlaps the band"},
+                {"severity": "info", "code": "container_overflow", "selector": "#sc1-photo-img", "message": "Ken Burns"},
+            ],
+        },
+        "craft": {"ok": True, "findings": [{"severity": "warning", "code": "dead_stretch", "message": "nothing moves"}]},
+        "hdr": None,
+    }
+    seen = {}
+
+    def fake_run(args, comp_dir, timeout=900):
+        seen["args"] = args
+        return subprocess.CompletedProcess(args, 1, "check\n" + json.dumps(report), "")
+
+    monkeypatch.setattr(hyperframes, "run", fake_run)
+    result = hyperframes.check(tmp_path, samples=12, caption_zone="x0=0;y0=.8;x1=1;y1=.9;seek=.5")
+    assert seen["args"] == ["check", "--json", "--samples", "12", "--caption-zone", "x0=0;y0=.8;x1=1;y1=.9;seek=.5"]
+    assert not result.ok
+    assert result.errors == ["layout:caption_zone_collision: #sc2-head overlaps the band"]
+    assert result.warnings == ["craft:dead_stretch: nothing moves"]
+    assert result.raw == report
+
+
+def test_check_without_a_report_is_not_ok(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(hyperframes, "run", lambda args, comp_dir, timeout=900: subprocess.CompletedProcess(args, 1, "", "no chrome"))
+    result = hyperframes.check(tmp_path)
+    assert not result.ok and "no report" in result.errors[0]
+
+
+def test_a_clean_check_is_ok(monkeypatch, tmp_path) -> None:
+    clean = {"ok": True, "layout": {"ok": True, "findings": []}}
+    monkeypatch.setattr(hyperframes, "run", lambda args, comp_dir, timeout=900: subprocess.CompletedProcess(args, 0, json.dumps(clean), ""))
+    assert hyperframes.check(tmp_path).ok

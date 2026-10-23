@@ -230,8 +230,12 @@ def photo_reveal(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, 
             "sub": ctx.text("subline", s.get("subline"), "sub", "sub", 640, 3, min_ratio=0.82),
         }
     elif F.name == "portrait":
-        box = (0, 0, F.w, 1080)
-        col = {"style": f"left:{F.pad_x}px;top:1130px;width:{F.content_w}px;height:{F.h - F.pad_bottom - 1130}px", "align": "start"}
+        # The text column (360 px) sits on the bottom safe margin and the photo
+        # stops 50 px above it: 0-1080 / 1130-1490 without captions; both move
+        # up when the caption band joins the margin.
+        col_top = F.h - F.pad_bottom - 360
+        box = (0, 0, F.w, col_top - 50)
+        col = {"style": f"left:{F.pad_x}px;top:{col_top}px;width:{F.content_w}px;height:360px", "align": "start"}
         texts = {
             "over": ctx.text("overline", s.get("overline"), "over", "over", F.content_w, 1),
             "head": ctx.text("headline", s.get("headline"), "head", "head", F.content_w, 2, min_ratio=0.58),
@@ -542,7 +546,9 @@ def cta_endcard(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, b
         bottom = F.h - F.pad_bottom
         col_w = F.content_w
         col = f"left:{F.pad_x}px;top:{top}px;width:{col_w}px;height:{bottom - top}px"
-        justify = "start" if photo else "center"
+        # Under a photo the column hangs from the top while the website pill
+        # fills it out; without a website it is centred so no gap opens below.
+        justify = "start" if photo and brand.website else "center"
     texts = {
         "over": ctx.text("overline", s.get("overline"), "over", "over", col_w, 1),
         # The CTA is the brief's, word for word (up to 120 characters): it is
@@ -551,7 +557,14 @@ def cta_endcard(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, b
         "website": ctx.text("website", brand.website, "pill", "pill", min(col_w, 900) - 96, 1, min_ratio=0.75),
     }
     step_texts = [ctx.text(f"steps.{i}", t_, "item", "item", 300, 1, min_ratio=0.85) for i, t_ in enumerate(s.get("steps") or [])]
-    mark = None if brand.logo_src else ctx.text("brand", brand.name, "mark", "mark", min(col_w, 700), 1, min_ratio=1.0)
+    mark = None
+    if not brand.logo_src:
+        if brand.website:
+            mark = ctx.text("brand", brand.name, "mark", "mark", min(col_w, 700), 1, min_ratio=1.0)
+        else:
+            # No website pill: the wordmark closes the card and takes the pill's size
+            # (a long name shrinks back towards the 28 px floor).
+            mark = ctx.text("brand", brand.name, "mark", "pill", min(col_w, 900), 1, min_ratio=0.7)
     cover = None
     t = _t0(flags) + 0.1
     if photo is not None:

@@ -13,7 +13,7 @@ html, body { margin: 0; padding: 0; background: {{ bg }}; }
 <body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="{{ total }}" data-width="{{ F.w }}" data-height="{{ F.h }}">
 {% for h in hosts %}
-<div id="{{ h.id }}" data-composition-id="{{ h.id }}" data-composition-src="compositions/{{ h.id }}.html" data-start="{{ h.start }}" data-duration="{{ h.duration }}" data-track-index="{{ h.track }}" data-track-kind="graphics" data-width="{{ F.w }}" data-height="{{ F.h }}"></div>
+<div id="{{ h.id }}" data-composition-id="{{ h.id }}" data-composition-src="compositions/{{ h.id }}.html" data-start="{{ h.start }}" data-duration="{{ h.duration }}" data-track-index="{{ h.track }}" data-track-kind="{{ h.kind }}" data-width="{{ F.w }}" data-height="{{ F.h }}"></div>
 {% endfor %}
 {% if narration %}
 <audio id="narration" src="{{ narration }}" data-start="0" data-duration="{{ total }}" data-track-index="3" data-volume="1"></audio>

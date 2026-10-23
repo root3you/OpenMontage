@@ -1,0 +1,24 @@
+<template>
+<style>
+#root { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.k-capband { position: absolute; left: 0; right: 0; top: {{ top }}px; height: {{ band.height }}px; }
+.k-cap { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; opacity: 0; visibility: hidden; }
+.k-capbox { {{ role_css }} color: {{ fg }}; background: {{ bg }}; padding: {{ band.pad_v }}px {{ band.pad_h }}px; border-radius: {{ radius }}px; box-shadow: {{ shadow }}; white-space: nowrap; text-align: center; }
+</style>
+<div id="root" data-composition-id="captions" data-width="{{ F.w }}" data-height="{{ F.h }}">
+<div class="k-capband" data-layout-allow-caption-zone>
+{% for g in groups %}
+<div class="k-cap" id="{{ g.id }}"><div class="k-capbox" style="font-size:{{ g.px }}px">{{ g.html }}</div></div>
+{% endfor %}
+</div>
+</div>
+<script>
+(function () {
+  var tl = gsap.timeline({ paused: true });
+{% for line in tweens %}
+  {{ line }}
+{% endfor %}
+  window.__timelines["captions"] = tl;
+})();
+</script>
+</template>

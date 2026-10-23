@@ -68,6 +68,41 @@ def lint(comp_dir: Path) -> LintReport:
     return LintReport(ok=report.get("errorCount", len(errors)) == 0 and proc.returncode == 0, errors=errors, warnings=warnings, raw=report)
 
 
+@dataclass
+class CheckReport:
+    ok: bool
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    raw: Optional[dict] = None
+
+
+CHECK_SECTIONS = ("lint", "runtime", "layout", "motion", "contrast", "craft")
+
+
+def check(comp_dir: Path, *, samples: int = 9, caption_zone: Optional[str] = None, timeout: int = 900) -> CheckReport:
+    """`hyperframes check`: lint plus the browser audits (layout overflow and
+    overlap, contrast, craft). `caption_zone` is the CLI's --caption-zone value
+    (fractions of the canvas, with `seek` fractions of the duration to test at).
+    Info findings (transients at one sample) are ignored."""
+    args = ["check", "--json", "--samples", str(samples)]
+    if caption_zone:
+        args += ["--caption-zone", caption_zone]
+    proc = run(args, comp_dir, timeout=timeout)
+    report = _json(proc.stdout)
+    if not isinstance(report, dict):
+        return CheckReport(ok=False, errors=[f"check produced no report (exit {proc.returncode}): {proc.stderr[-800:]}"])
+    errors, warnings = [], []
+    for section in CHECK_SECTIONS:
+        for finding in (report.get(section) or {}).get("findings") or []:
+            where = finding.get("selector") or finding.get("file") or ""
+            text = f"{section}:{finding.get('code')}: {where} {finding.get('message', '')}".replace("  ", " ").strip()
+            if finding.get("severity") == "error":
+                errors.append(text)
+            elif finding.get("severity") == "warning":
+                warnings.append(text)
+    return CheckReport(ok=bool(report.get("ok")) and not errors, errors=errors, warnings=warnings, raw=report)
+
+
 def snapshot(comp_dir: Path, times: list[float], output: Path) -> list[Path]:
     output.mkdir(parents=True, exist_ok=True)
     at = ",".join(f"{t:g}" for t in times)

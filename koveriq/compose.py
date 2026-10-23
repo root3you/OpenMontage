@@ -1,6 +1,7 @@
 """Build a HyperFrames project from a KoverIQ scene plan (the W1 contract).
 
-    build_composition(scene_plan, script, timings, assets, style, fmt, brand, out_dir) -> CompositionResult
+    build_composition(scene_plan, script, timings, assets, style, fmt, brand, out_dir,
+                      *, captions=False) -> CompositionResult
     apply_params(comp_dir, params) -> None
 
 Inputs
@@ -18,10 +19,13 @@ Inputs
 - brand: {"companyName", "website"?, "logoPath"?: Path, "palette"?: {bg,
   surface, ink, muted, accent, accentInk as #RRGGBB}}. Without a website
   (missing, None or "") the end card has no website pill.
+- captions (keyword-only, default False): burn in captions from the timings'
+  words (koveriq.captions).
 
 Output (out_dir): index.html (root), compositions/<sceneId>.html (one
-sub-composition per scene, plus brand.html), assets/ (copied photos, logo,
-narration, gsap.min.js), .koveriq/build.json (what apply_params rebuilds from).
+sub-composition per scene, plus brand.html, and captions.html when
+captions are on), assets/ (copied photos, logo, narration, gsap.min.js),
+.koveriq/build.json (what apply_params rebuilds from).
 Nothing here touches the network or runs a browser.
 """
 
@@ -39,11 +43,12 @@ from typing import Any, Mapping, Optional
 
 import jsonschema
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
-from markupsafe import Markup
+from markupsafe import Markup, escape
 from PIL import Image, UnidentifiedImageError
 
+from koveriq import captions as caps
 from koveriq.kinds import BARS, KIND_BUILDERS, BrandView, Motion, PhotoInfo, Resources
-from koveriq.layout import FRAMES, SceneContext, Tweens, num, scene_words
+from koveriq.layout import FRAMES, Frame, SceneContext, Tweens, num, scene_words
 from koveriq.scenes import (
     TEXT_SLOTS,
     from_checkpoint_scene_plan,
@@ -53,7 +58,7 @@ from koveriq.scenes import (
 )
 from koveriq.styles import STYLES as STYLE_DEFS
 from koveriq.styles import merge_palette, palette_warnings, rgba
-from koveriq.textfit import fit_text
+from koveriq.textfit import fit_text, text_width
 from koveriq.vendor import GsapUnavailable, verified_gsap
 
 PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
@@ -67,7 +72,7 @@ MIN_SCENE_MS = 1500
 STATE_FILE = pathlib.Path(".koveriq") / "build.json"
 
 _SCENE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
-_RESERVED_IDS = {"main", "root", "brand", "narration"}
+_RESERVED_IDS = {"main", "root", "brand", "narration", "captions"}
 _IMAGE_EXT = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
 _AUDIO_EXT = {".wav", ".mp3", ".m4a", ".aac"}
 _LINE = re.compile(r"^[^\s\x00-\x1f\x7f](?:[^\x00-\x1f\x7f]*[^\s\x00-\x1f\x7f])?$")
@@ -248,9 +253,15 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     roles = {name: Markup(role.css()) for name, role in style.roles.items()}
     shade = rgba(palette["ink"] if style.name == "clean" else palette["bg"], 0.55 if style.name == "clean" else 0.75)
     decor = rgba(palette["ink"], 0.06) if style.name == "clean" else rgba(palette["accent"], 0.16)
-    style_css = Markup(
-        env.get_template(f"styles/{style.name}.css.j2").render(roles=roles, radius=style.radius, F=frame, shade=Markup(shade), decor=Markup(decor))
-    )
+    style_css: dict[Frame, Markup] = {}
+
+    def css_for(f: Frame) -> Markup:
+        if f not in style_css:
+            style_css[f] = Markup(
+                env.get_template(f"styles/{style.name}.css.j2").render(roles=roles, radius=style.radius, F=f, shade=Markup(shade), decor=Markup(decor))
+            )
+        return style_css[f]
+
     head, body = style.roles["head"], style.roles["sub"]
     root_vars = Markup(
         " ".join(
@@ -271,8 +282,12 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     timings = state["timings"]
     params = state["params"]["scenes"]
     hosts = []
+    captions = _captions(env, state, style, frame, palette, warnings) if state.get("captions") else None
+    # Captioned scenes keep their text above the caption band (koveriq.captions).
+    captioned = caps.captioned_frame(frame) if captions else frame
     for index, scene in enumerate(scenes):
         sid, kind = scene["id"], scene["kind"]
+        scene_frame = frame if kind in caps.NOT_CAPTIONED else captioned
         timing = timings[sid]
         duration = (timing["endMs"] - timing["startMs"]) / 1000
         slots, font_scale = _apply_scene_params(scene, params.get(sid, {}))
@@ -281,7 +296,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
             kind=kind,
             slots=slots,
             style=style,
-            frame=frame,
+            frame=scene_frame,
             duration=duration,
             words=scene_words(timing),
             font_scale=font_scale,
@@ -297,10 +312,10 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
         html = env.get_template(f"kinds/{kind}.html.j2").render(
             sid=sid,
             kind=kind,
-            F=frame,
+            F=scene_frame,
             v=view,
             root_vars=root_vars,
-            style_css=style_css,
+            style_css=css_for(scene_frame),
             style_name=style.name,
             radius=style.radius,
             tin=flags["tin"],
@@ -311,7 +326,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
         )
         files[f"compositions/{sid}.html"] = html
         warnings.extend(ctx.warnings)
-        hosts.append({"id": sid, "start": num(timing["startMs"] / 1000), "duration": num(duration), "track": 1})
+        hosts.append({"id": sid, "start": num(timing["startMs"] / 1000), "duration": num(duration), "track": 1, "kind": "graphics"})
 
     total_ms = timings[scenes[-1]["id"]]["endMs"]
     # The corner mark shows outside end cards (which carry the full lock-up).
@@ -327,8 +342,12 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     windows = [w for w in windows if w[1] - w[0] >= 1.5]
     if windows:
         brand_end = windows[-1][1]
-        hosts.append({"id": "brand", "start": "0", "duration": num(brand_end), "track": 2})
+        hosts.append({"id": "brand", "start": "0", "duration": num(brand_end), "track": 2, "kind": "graphics"})
         files["compositions/brand.html"] = _brand_bug(env, style, frame, palette, resources.brand, windows, warnings)
+    if captions:
+        # Last host, so the captions paint over every scene and the corner mark.
+        hosts.append({"id": "captions", "start": "0", "duration": num(total_ms / 1000), "track": 4, "kind": "captions"})
+        files["compositions/captions.html"] = captions
 
     title = (state.get("title") or brand["companyName"]).strip() or "KoverIQ video"
     index_html = env.get_template("root.html.j2").render(
@@ -349,6 +368,44 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     for rel, content in files.items():
         (out_dir / rel).write_text(content, encoding="utf-8")
     return warnings
+
+
+def _captions(env: Environment, state: dict[str, Any], style, frame: Frame, palette: dict[str, str], warnings: list[str]) -> Optional[str]:
+    """The caption sub-composition, or None (with a warning) when nothing is spoken."""
+    role, band = caps.ROLES[style.name], caps.BAND[frame.name]
+    face = {"family": role.family, "weight": role.weight, "uppercase": role.upper, "letter_spacing_em": role.tracking}
+
+    def fits(text: str) -> bool:
+        shown = text.upper() if role.upper else text
+        width = text_width(shown, role.family, role.weight, px=band.px, letter_spacing_em=role.tracking)
+        return width <= band.text_w * 0.95
+
+    cues = caps.build_cues(state["scene_plan"]["scenes"], state["timings"], fits=fits)
+    if not cues:
+        warnings.append("captions_empty: captions were requested but no narration words fall in a captioned scene")
+        return None
+    groups = []
+    for number, cue in enumerate(cues, start=1):
+        # Groups of several words fit on one line at the base size (group_words);
+        # only a single word too long for the box can still overflow it.
+        fit = fit_text(cue.text, box_w=band.text_w, max_lines=1, base_px=band.px, min_px=band.min_px, **face)
+        if not fit.fits:
+            warnings.append(f"text_fit:captions.g{number}: {cue.text!r} does not fit the caption box")
+        groups.append({"id": f"captions-g{number}", "px": fit.px, "html": Markup("<br>").join(escape(line) for line in fit.lines)})
+    tweens = caps.tweens(cues, [g["id"] for g in groups])
+    bold = style.name == "bold_offer"
+    return env.get_template("captions.html.j2").render(
+        F=frame,
+        top=caps.band_top(frame),
+        band=band,
+        role_css=Markup(role.css()),
+        fg=palette["ink"],
+        bg=Markup(rgba(palette["bg"], 0.86) if bold else rgba(palette["surface"], 0.94)),
+        radius=style.radius,
+        shadow=Markup(f"inset 0 -6px 0 {palette['accent']}, 0 10px 28px rgba(0,0,0,.3)" if bold else "0 10px 28px rgba(20,16,10,.22)"),
+        groups=groups,
+        tweens=[Markup(line) for line in tweens.lines],
+    )
 
 
 def _brand_bug(env: Environment, style, frame, palette, brand: BrandView, windows: list[list[float]], warnings: list[str]) -> str:
@@ -413,9 +470,18 @@ def build_composition(
     fmt: str,
     brand: dict,
     out_dir: pathlib.Path,
+    *,
+    captions: bool = False,
 ) -> CompositionResult:
-    """Write a HyperFrames project for one style and format into out_dir."""
+    """Write a HyperFrames project for one style and format into out_dir.
+
+    captions=True burns in captions from the narration's word timings
+    (koveriq.captions): a captions sub-composition on its own track, with the
+    captioned scenes laid out clear of the caption band.
+    """
     errors: list[str] = []
+    if not isinstance(captions, bool):
+        errors.append(f"captions: must be true or false, not {type(captions).__name__}")
     if not isinstance(style, str) or style not in STYLE_DEFS:
         errors.append(f"style: {style!r} is not one of {list(STYLES)}")
     if not isinstance(fmt, str) or fmt not in FRAMES:
@@ -531,6 +597,7 @@ def build_composition(
         "narration": narration_rel,
         "params": {"scenes": {}},
         "input_warnings": timing_warnings,
+        "captions": captions,
     }
     warnings = _render(out_dir, state)
     _save_state(out_dir, state, warnings)

@@ -90,6 +90,35 @@ def test_without_a_website_the_lockup_takes_the_pill_slot(tmp_path) -> None:
     assert "scale" in brand_tween.group(1)  # the pill's pop, not a plain fade
 
 
+@pytest.mark.parametrize("fmt", sorted(FORMATS))
+def test_without_a_website_the_wordmark_takes_the_pills_size(tmp_path, fmt) -> None:
+    """The pill was the card's heaviest closing element; the wordmark replaces
+    its weight (a logo lock-up is already large and keeps its size)."""
+    frame_name = {"16:9": "landscape", "9:16": "portrait", "1:1": "square"}[fmt]
+    _, with_site = _end_card(tmp_path / "a", fmt=fmt)
+    _, without = _end_card(tmp_path / "b", fmt=fmt, brand_kit={"companyName": "Shutters Factory"})
+    assert int(_element(with_site, "sc3-mark").group(1)) == SIZES[frame_name]["mark"]
+    assert int(_element(without, "sc3-mark").group(1)) == SIZES[frame_name]["pill"]
+    _, logo = _end_card(tmp_path / "c", fmt=fmt, brand_kit={"companyName": "X", "logoPath": brand(tmp_path, logo=True)["logoPath"]})
+    assert 'id="sc3-mark"' not in logo and 'src="assets/brand/logo.jpg"' in logo
+
+
+@pytest.mark.parametrize("fmt", ["9:16", "1:1"])
+def test_without_a_website_the_column_under_the_photo_is_centred(tmp_path, fmt) -> None:
+    """Under a photo the column hangs from the top while the pill fills it out;
+    without the pill it is centred in the space instead, so no gap opens below."""
+    _, with_site = _end_card(tmp_path / "a", fmt=fmt)
+    _, without = _end_card(tmp_path / "b", fmt=fmt, brand_kit={"companyName": "Shutters Factory"})
+    assert "justify-content:flex-start" in with_site
+    assert "justify-content:center" in without and "justify-content:flex-start" not in without
+
+
+def test_a_long_company_name_still_shrinks_to_fit_without_a_website(tmp_path) -> None:
+    kit = {"companyName": "The Very Long Named Window Shutter Company Ltd"}
+    result, end = _end_card(tmp_path, fmt="9:16", brand_kit=kit)
+    assert MIN_TEXT_PX <= int(_element(end, "sc3-mark").group(1)) < SIZES["portrait"]["pill"]
+
+
 def test_apply_params_rebuilds_a_card_without_a_website(tmp_path) -> None:
     plan, script, timings = plan_for(KINDS)
     out = tmp_path / "comp"
@@ -148,3 +177,12 @@ def test_an_unbreakable_cta_still_appears_in_full_with_a_warning(tmp_path) -> No
     lines = _element(end, "sc3-cta").group(3).split("<br>")
     assert " ".join(lines) == cta
     assert any(w.startswith("text_fit:sc3.cta") for w in result.lint_warnings)
+
+
+def test_the_ladder_returns_nothing_for_no_text() -> None:
+    from koveriq.layout import FRAMES as F, SceneContext
+    from koveriq.styles import STYLES as S
+
+    ctx = SceneContext(sid="sc1", kind="cta_endcard", slots={}, style=S["clean"], frame=F["16:9"], duration=5.0, words=[])
+    assert ctx.text_ladder("cta", None, "head", "cta", 900) is None
+    assert ctx.text_ladder("cta", "", "head", "cta", 900) is None

@@ -1,4 +1,5 @@
-"""Every style x format, with all ten kinds, passes `hyperframes lint` (0 errors).
+"""Every style x format, with all ten kinds, passes `hyperframes lint` (0 errors),
+with burned-in captions on and off, with and without a logo and a website.
 
 Opt-in: needs Node and the pinned HyperFrames CLI in the npx cache.
 
@@ -25,12 +26,18 @@ pytestmark = pytest.mark.skipif(
 @pytest.mark.parametrize("style", sorted(STYLES))
 @pytest.mark.parametrize("fmt", sorted(FORMATS))
 @pytest.mark.parametrize("logo", [False, True], ids=["wordmark", "logo"])
-def test_all_kinds_lint_clean(tmp_path, style: str, fmt: str, logo: bool) -> None:
+@pytest.mark.parametrize("captions", [False, True], ids=["captions-off", "captions-on"])
+def test_all_kinds_lint_clean(tmp_path, style: str, fmt: str, logo: bool, captions: bool) -> None:
     plan, script, timings = plan_for(list(KINDS))
+    kit = brand(tmp_path, logo=logo)
+    if logo:  # the logo variants also cover a brand kit without a website
+        kit.pop("website")
     result = build_composition(
-        plan, script, timings, make_assets(tmp_path), style, fmt, brand(tmp_path, logo=logo), tmp_path / "comp"
+        plan, script, timings, make_assets(tmp_path), style, fmt, kit, tmp_path / "comp", captions=captions
     )
-    report = hyperframes.lint(result.index_html.parent)
+    comp = result.index_html.parent
+    assert (comp / "compositions" / "captions.html").is_file() is captions
+    report = hyperframes.lint(comp)
     assert report.errors == [], report.errors
     assert report.ok
     nested = [w for w in report.warnings if w.startswith("nested_structure_needs_subcomposition")]

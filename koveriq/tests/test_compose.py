@@ -49,8 +49,11 @@ def _read(path: pathlib.Path) -> str:
 def test_contract_signatures() -> None:
     fields = {f.name: f.type for f in dataclasses.fields(CompositionResult)}
     assert list(fields) == ["index_html", "duration_ms", "hook_time_ms", "lint_warnings"]
-    params = list(inspect.signature(build_composition).parameters)
-    assert params == ["scene_plan", "script", "timings", "assets", "style", "fmt", "brand", "out_dir"]
+    signature = inspect.signature(build_composition).parameters
+    positional = [n for n, p in signature.items() if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD]
+    assert positional == ["scene_plan", "script", "timings", "assets", "style", "fmt", "brand", "out_dir"]
+    # Lane W3: burned-in captions, a keyword-only option that defaults to off.
+    assert [n for n, p in signature.items() if p.kind is inspect.Parameter.KEYWORD_ONLY] == ["captions"]
     from koveriq.compose import apply_params
 
     assert list(inspect.signature(apply_params).parameters) == ["comp_dir", "params"]

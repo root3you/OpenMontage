@@ -289,3 +289,8 @@ class Tweens:
     def to(self, selector: str, to: dict[str, Any], at: float) -> None:
         self.lines.append(f"tl.to({json.dumps(selector)}, {self._vars(to)}, {num(at)});")
         self.ends.append(at + float(to.get("duration", 0)))
+
+    def set(self, selector: str, values: dict[str, Any], at: float) -> None:
+        """An instant flip (e.g. visibility), applied on every seek."""
+        self.lines.append(f"tl.set({json.dumps(selector)}, {self._vars(values)}, {num(at)});")
+        self.ends.append(at)
