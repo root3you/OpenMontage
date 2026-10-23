@@ -1,0 +1,97 @@
+# Piper voices the KoverIQ worker may use (spec §10.2). A voice that is not
+# listed under `voices` cannot be selected.
+#
+# A voice is listed only if BOTH its training data AND its training lineage
+# allow commercial use of the generated audio. Many en_GB Piper voices are
+# fine-tuned from en_US-lessac (Blizzard 2013 data, research-only licence) or
+# en_US-ryan (CC BY-NC-SA); those are rejected even when their own dataset is
+# CC BY. Evidence and open questions: docs/koveriq-licences.md.
+#
+# Checked 2026-10-23 against rhasspy/piper-voices at the revision below; file
+# hashes were verified by downloading the files.
+version: 1
+checked: "2026-10-23"
+source:
+  repo: https://huggingface.co/rhasspy/piper-voices
+  revision: 5041a7a49ae5b3a0f30e6837769eb03fdbb231bd
+
+voices:
+  - voiceId: en_GB-cori-high
+    label: Cori, British English, female (high quality)
+    language: en-GB
+    gender: female
+    quality: high
+    sampleRate: 22050
+    speakers: 1
+    default: true
+    dataset: LibriVox recordings read by "Cori" (about 24 h), assembled by Bryce Beattie
+    datasetLicence: Public domain (LibriVox recordings)
+    datasetLicenceUrl: https://librivox.org/pages/public-domain/
+    training: Trained from scratch (no base checkpoint) for 500 epochs
+    licence: "Model card: \"License: public domain\"; author: \"License: public domain\""
+    licenceUrl: https://huggingface.co/rhasspy/piper-voices/blob/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_GB/cori/high/MODEL_CARD
+    authorUrl: https://brycebeattie.com/files/tts/
+    attributionRequired: false
+    attributionText: "Voice: Piper en_GB-cori-high (Cori) by Bryce Beattie, trained on public-domain LibriVox recordings."
+    commercialUse: true
+    files:
+      onnx:
+        url: https://huggingface.co/rhasspy/piper-voices/resolve/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_GB/cori/high/en_GB-cori-high.onnx
+        bytes: 114219352
+        md5: 3474a80133d9a03e6870d2ac42c18806
+        sha256: 470b4dd634c98f8a4850d7626ffc3dfc90774628eeef6605a6dd8f88f30a5903
+      config:
+        url: https://huggingface.co/rhasspy/piper-voices/resolve/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_GB/cori/high/en_GB-cori-high.onnx.json
+        bytes: 4963
+        md5: 0f7d42e77a99193006aa34a34442f5e0
+        sha256: 9e7fb5b5671612c22f3c81cbe46c1ae87b031a4632bcb509e499dad6f1e2adec
+
+  - voiceId: en_GB-cori-medium
+    label: Cori, British English, female (medium quality, faster)
+    language: en-GB
+    gender: female
+    quality: medium
+    sampleRate: 22050
+    speakers: 1
+    default: false
+    dataset: LibriVox recordings read by "Cori" (about 24 h), assembled by Bryce Beattie
+    datasetLicence: Public domain (LibriVox recordings)
+    datasetLicenceUrl: https://librivox.org/pages/public-domain/
+    training: Trained from scratch (no base checkpoint) for 640 epochs
+    licence: "Model card: \"License: public domain\"; author: \"License: public domain\""
+    licenceUrl: https://huggingface.co/rhasspy/piper-voices/blob/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_GB/cori/medium/MODEL_CARD
+    authorUrl: https://brycebeattie.com/files/tts/
+    attributionRequired: false
+    attributionText: "Voice: Piper en_GB-cori-medium (Cori) by Bryce Beattie, trained on public-domain LibriVox recordings."
+    commercialUse: true
+    files:
+      onnx:
+        url: https://huggingface.co/rhasspy/piper-voices/resolve/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_GB/cori/medium/en_GB-cori-medium.onnx
+        bytes: 63531379
+        md5: f143307611eccea9d976235d0895f57c
+        sha256: 1899f98e5fb8310154f3c2973f4b8a929ba7245e722b3d3a85680b833d95f10d
+      config:
+        url: https://huggingface.co/rhasspy/piper-voices/resolve/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_GB/cori/medium/en_GB-cori-medium.onnx.json
+        bytes: 4966
+        md5: 12b1dc45d8919f3475cf296d5f16a4c6
+        sha256: e262c16d7f192f69d4edd6b4ef8a5915379e67495fcc402f1ab15eeb33da3d36
+
+rejected:
+  - voiceId: en_GB-alan-low
+    reason: Voice data (Mycroft mimic3 apope_low) is "All Rights Reserved"; fine-tuned from en_US-ryan-low (RyanSpeech, CC BY-NC-SA 4.0).
+  - voiceId: en_GB-alan-medium
+    reason: Voice data is "All Rights Reserved"; fine-tuned from en_US-lessac (Blizzard 2013 data, research-only licence).
+  - voiceId: en_GB-alba-medium
+    reason: Data is CC BY 4.0, but the voice is fine-tuned from en_US-lessac (research-only); commercial status unclear.
+  - voiceId: en_GB-aru-medium
+    reason: Data is CC BY (3.0/4.0 listed inconsistently), but fine-tuned from en_US-lessac (research-only); commercial status unclear.
+  - voiceId: en_GB-jenny_dioco-medium
+    reason: Dataset allows commercial use with attribution, but fine-tuned from en_US-lessac (research-only); also an Irish speaker.
+  - voiceId: en_GB-northern_english_male-medium
+    reason: Data is CC BY-SA 4.0 (share-alike, refused under spec §10.3); fine-tuned from en_US-lessac (research-only).
+  - voiceId: en_GB-semaine-medium
+    reason: Data (SEMAINE) is CC BY-NC-SA 4.0, non-commercial; fine-tuned from en_US-lessac (research-only).
+  - voiceId: en_GB-southern_english_female-low
+    reason: Data is CC BY-SA 4.0 (share-alike); fine-tuned from en_US-ryan-low (CC BY-NC-SA 4.0).
+  - voiceId: en_GB-vctk-medium
+    reason: Data (CSTR VCTK) is CC BY 4.0, but fine-tuned from en_US-lessac (research-only); commercial status unclear.

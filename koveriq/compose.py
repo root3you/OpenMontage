@@ -319,15 +319,17 @@ def _brand_bug(env: Environment, style, frame, palette, brand: BrandView, end_s:
             brand.name,
             family=mark_role.family,
             weight=mark_role.weight,
-            box_w=520,
+            box_w=640,
             max_lines=1,
-            base_px=22,
-            min_px=16,
+            base_px=28,
+            min_px=22,
             uppercase=mark_role.upper,
             letter_spacing_em=mark_role.tracking,
         )
         if not fit.fits:
             warnings.append("text_fit:brand.companyName: the company name is too long for the corner mark")
+        elif fit.px < 28:
+            warnings.append(f"text_floor:brand.companyName: the corner mark is {fit.px}px, below the 28px phone floor")
         from koveriq.layout import Text
 
         mark = Text(slot="companyName", lines=fit.lines[:1], px=fit.px, width=int(fit.width / 0.95 + 4), fits=fit.fits)

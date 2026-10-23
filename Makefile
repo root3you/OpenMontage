@@ -6,6 +6,9 @@ PIP = $(RUN_PYTHON) -m pip
 
 .DEFAULT_GOAL := setup
 
+# KoverIQ fork targets (golden, koveriq-test, koveriq-lint, koveriq-vendor)
+include koveriq/koveriq.mk
+
 .PHONY: setup install install-dev install-gpu test test-contracts lint clean preflight demo demo-list hyperframes-doctor hyperframes-warm venv ensure-venv
 
 # ---- Virtual environment ----

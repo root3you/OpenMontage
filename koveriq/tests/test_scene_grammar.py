@@ -39,7 +39,8 @@ def test_length_bounds_exist_and_word_bounds_follow_the_pace_rule(target: int) -
     assert (pace["min"], pace["max"]) == (2.3, 2.7)
     assert bounds["words"]["min"] == round(target * 2.3 + 0.0001)
     assert bounds["words"]["max"] == round(target * 2.7 + 0.0001)
-    assert bounds["seconds"]["min"] < target < bounds["seconds"]["max"]
+    assert bounds["seconds"]["min"] == pytest.approx(target * 0.8)
+    assert bounds["seconds"]["max"] == pytest.approx(target * 1.4)
     assert 1 <= bounds["scenes"]["min"] <= bounds["scenes"]["max"]
 
 
@@ -93,7 +94,8 @@ def test_unknown_video_type() -> None:
 def test_total_length_is_checked_when_known() -> None:
     plan, _, _ = plan_for(GOOD_30)
     assert grammar_errors(plan, PROMO, 30, total_seconds=30.0) == []
-    assert any("total length" in e for e in grammar_errors(plan, PROMO, 30, total_seconds=40.0))
+    assert grammar_errors(plan, PROMO, 30, total_seconds=40.0) == []  # real TTS pacing
+    assert any("total length" in e for e in grammar_errors(plan, PROMO, 30, total_seconds=45.0))
 
 
 def test_word_count_follows_the_pace_rule() -> None:

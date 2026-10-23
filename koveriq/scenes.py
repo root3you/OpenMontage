@@ -19,7 +19,7 @@ import copy
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import jsonschema
 
@@ -75,14 +75,6 @@ TEXT_SLOTS = {
 EXTENSION_KEYS = ("kind", "slots", "role")
 
 
-class ScenePlanError(ValueError):
-    """A scene plan, slot or timing problem. `errors` lists every problem found."""
-
-    def __init__(self, errors: Iterable[str]):
-        self.errors = list(errors)
-        super().__init__("; ".join(self.errors) if self.errors else "invalid scene plan")
-
-
 @lru_cache(maxsize=1)
 def load_kind_schema() -> dict[str, Any]:
     with open(KIND_SCHEMA_PATH, encoding="utf-8") as handle:
@@ -128,10 +120,6 @@ def scene_asset_ids(scene: dict[str, Any]) -> list[str]:
     return ids
 
 
-def scene_has_photo(scene: dict[str, Any]) -> bool:
-    return bool(scene_asset_ids(scene))
-
-
 def from_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
     """Return a copy with `kind`/`slots`/`role` inline on every scene.
 
@@ -139,8 +127,8 @@ def from_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
     keeps them in `metadata.koveriq.scenes`. Inline keys win.
     """
     plan = copy.deepcopy(plan)
-    stored = ((plan.get("metadata") or {}).get("koveriq") or {}).get("scenes") or {}
-    for scene in plan.get("scenes") or []:
+    stored = _stored_extensions(plan)
+    for scene in _scene_dicts(plan):
         extra = stored.get(scene.get("id")) or {}
         for key in EXTENSION_KEYS:
             if key not in scene and key in extra:
@@ -155,13 +143,30 @@ def to_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
     """
     plan = from_checkpoint_scene_plan(plan)
     stored: dict[str, Any] = {}
-    for scene in plan.get("scenes") or []:
+    for scene in _scene_dicts(plan):
         extra = {key: scene.pop(key) for key in EXTENSION_KEYS if key in scene}
         if extra:
             stored[scene.get("id")] = extra
-    metadata = plan.setdefault("metadata", {})
-    metadata.setdefault("koveriq", {})["scenes"] = stored
+    metadata = plan.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = plan["metadata"] = {}
+    koveriq = metadata.get("koveriq")
+    if not isinstance(koveriq, dict):
+        koveriq = metadata["koveriq"] = {}
+    koveriq["scenes"] = stored
     return plan
+
+
+def _scene_dicts(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    scenes = plan.get("scenes")
+    return [s for s in scenes if isinstance(s, dict)] if isinstance(scenes, list) else []
+
+
+def _stored_extensions(plan: dict[str, Any]) -> dict[str, Any]:
+    node: Any = plan
+    for key in ("metadata", "koveriq", "scenes"):
+        node = node.get(key) if isinstance(node, dict) else None
+    return node if isinstance(node, dict) else {}
 
 
 def scene_plan_errors(plan: dict[str, Any]) -> list[str]:

@@ -44,9 +44,9 @@ FRAMES = {
 
 # Base sizes (px) per text size key.
 SIZES = {
-    "landscape": {"over": 26, "head": 92, "head_xl": 112, "title": 72, "sub": 34, "item": 34, "label": 28, "big": 150, "cta": 100, "pill": 38, "num": 30, "badge": 30, "mark": 22},
-    "portrait": {"over": 26, "head": 84, "head_xl": 100, "title": 68, "sub": 34, "item": 36, "label": 30, "big": 132, "cta": 90, "pill": 36, "num": 32, "badge": 30, "mark": 22},
-    "square": {"over": 24, "head": 74, "head_xl": 88, "title": 60, "sub": 30, "item": 32, "label": 28, "big": 112, "cta": 80, "pill": 34, "num": 28, "badge": 28, "mark": 20},
+    "landscape": {"over": 28, "head": 92, "head_xl": 112, "title": 72, "sub": 34, "item": 34, "label": 28, "big": 150, "cta": 100, "pill": 38, "num": 30, "badge": 30, "mark": 28},
+    "portrait": {"over": 28, "head": 84, "head_xl": 100, "title": 68, "sub": 34, "item": 36, "label": 30, "big": 132, "cta": 90, "pill": 36, "num": 32, "badge": 30, "mark": 28},
+    "square": {"over": 28, "head": 74, "head_xl": 88, "title": 60, "sub": 30, "item": 32, "label": 28, "big": 112, "cta": 80, "pill": 34, "num": 28, "badge": 28, "mark": 28},
 }
 
 

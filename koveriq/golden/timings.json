@@ -1,0 +1,483 @@
+{
+  "sc1": {
+    "startMs": 0,
+    "endMs": 5500,
+    "words": [
+      {
+        "w": "Imagine",
+        "startMs": 600,
+        "endMs": 1060
+      },
+      {
+        "w": "waking",
+        "startMs": 1060,
+        "endMs": 1340
+      },
+      {
+        "w": "up",
+        "startMs": 1340,
+        "endMs": 1640
+      },
+      {
+        "w": "a",
+        "startMs": 1640,
+        "endMs": 1780
+      },
+      {
+        "w": "soft,",
+        "startMs": 1780,
+        "endMs": 2220
+      },
+      {
+        "w": "golden",
+        "startMs": 2560,
+        "endMs": 2920
+      },
+      {
+        "w": "light,",
+        "startMs": 2920,
+        "endMs": 3340
+      },
+      {
+        "w": "exactly",
+        "startMs": 3520,
+        "endMs": 3960
+      },
+      {
+        "w": "the",
+        "startMs": 3960,
+        "endMs": 4220
+      },
+      {
+        "w": "way",
+        "startMs": 4220,
+        "endMs": 4380
+      },
+      {
+        "w": "you",
+        "startMs": 4380,
+        "endMs": 4520
+      },
+      {
+        "w": "like",
+        "startMs": 4520,
+        "endMs": 4740
+      },
+      {
+        "w": "it.",
+        "startMs": 4740,
+        "endMs": 4940
+      }
+    ]
+  },
+  "sc2": {
+    "startMs": 5500,
+    "endMs": 13050,
+    "words": [
+      {
+        "w": "up",
+        "startMs": 5800,
+        "endMs": 5980
+      },
+      {
+        "w": "plantation",
+        "startMs": 5980,
+        "endMs": 6440
+      },
+      {
+        "w": "shutters",
+        "startMs": 6440,
+        "endMs": 7120
+      },
+      {
+        "w": "are",
+        "startMs": 7120,
+        "endMs": 7680
+      },
+      {
+        "w": "made",
+        "startMs": 7680,
+        "endMs": 7840
+      },
+      {
+        "w": "to",
+        "startMs": 7840,
+        "endMs": 8040
+      },
+      {
+        "w": "measure",
+        "startMs": 8040,
+        "endMs": 8260
+      },
+      {
+        "w": "for",
+        "startMs": 8260,
+        "endMs": 8460
+      },
+      {
+        "w": "every",
+        "startMs": 8460,
+        "endMs": 8680
+      },
+      {
+        "w": "window",
+        "startMs": 8680,
+        "endMs": 9040
+      },
+      {
+        "w": "in",
+        "startMs": 9040,
+        "endMs": 9280
+      },
+      {
+        "w": "your",
+        "startMs": 9280,
+        "endMs": 9400
+      },
+      {
+        "w": "home.",
+        "startMs": 9400,
+        "endMs": 9800
+      },
+      {
+        "w": "Bay",
+        "startMs": 10160,
+        "endMs": 10400
+      },
+      {
+        "w": "windows",
+        "startMs": 10400,
+        "endMs": 10780
+      },
+      {
+        "w": "and",
+        "startMs": 10780,
+        "endMs": 11140
+      },
+      {
+        "w": "awkward",
+        "startMs": 11140,
+        "endMs": 11460
+      },
+      {
+        "w": "shapes",
+        "startMs": 11460,
+        "endMs": 11840
+      },
+      {
+        "w": "included",
+        "startMs": 11840,
+        "endMs": 12360
+      }
+    ]
+  },
+  "sc3": {
+    "startMs": 13050,
+    "endMs": 18600,
+    "words": [
+      {
+        "w": "Choose",
+        "startMs": 13300,
+        "endMs": 13540
+      },
+      {
+        "w": "your",
+        "startMs": 13540,
+        "endMs": 13680
+      },
+      {
+        "w": "louver",
+        "startMs": 13680,
+        "endMs": 13980
+      },
+      {
+        "w": "size",
+        "startMs": 13980,
+        "endMs": 14320
+      },
+      {
+        "w": "and",
+        "startMs": 14320,
+        "endMs": 14600
+      },
+      {
+        "w": "your",
+        "startMs": 14600,
+        "endMs": 14740
+      },
+      {
+        "w": "color,",
+        "startMs": 14740,
+        "endMs": 15060
+      },
+      {
+        "w": "from",
+        "startMs": 15480,
+        "endMs": 15820
+      },
+      {
+        "w": "crisp",
+        "startMs": 15820,
+        "endMs": 16060
+      },
+      {
+        "w": "classic",
+        "startMs": 16060,
+        "endMs": 16500
+      },
+      {
+        "w": "white",
+        "startMs": 16500,
+        "endMs": 16820
+      },
+      {
+        "w": "to",
+        "startMs": 16820,
+        "endMs": 17040
+      },
+      {
+        "w": "warm",
+        "startMs": 17040,
+        "endMs": 17280
+      },
+      {
+        "w": "natural",
+        "startMs": 17280,
+        "endMs": 17700
+      },
+      {
+        "w": "wood.",
+        "startMs": 17700,
+        "endMs": 18040
+      }
+    ]
+  },
+  "sc4": {
+    "startMs": 18600,
+    "endMs": 23700,
+    "words": [
+      {
+        "w": "with",
+        "startMs": 18900,
+        "endMs": 19040
+      },
+      {
+        "w": "no",
+        "startMs": 19040,
+        "endMs": 19200
+      },
+      {
+        "w": "cords",
+        "startMs": 19200,
+        "endMs": 19480
+      },
+      {
+        "w": "or",
+        "startMs": 19480,
+        "endMs": 19640
+      },
+      {
+        "w": "chains,",
+        "startMs": 19640,
+        "endMs": 20080
+      },
+      {
+        "w": "their",
+        "startMs": 20660,
+        "endMs": 20780
+      },
+      {
+        "w": "child",
+        "startMs": 20780,
+        "endMs": 21120
+      },
+      {
+        "w": "safe",
+        "startMs": 21120,
+        "endMs": 21500
+      },
+      {
+        "w": "and",
+        "startMs": 21500,
+        "endMs": 21840
+      },
+      {
+        "w": "pet",
+        "startMs": 21840,
+        "endMs": 22060
+      },
+      {
+        "w": "friendly",
+        "startMs": 22060,
+        "endMs": 22460
+      },
+      {
+        "w": "by",
+        "startMs": 22460,
+        "endMs": 22700
+      },
+      {
+        "w": "design.",
+        "startMs": 22700,
+        "endMs": 23000
+      }
+    ]
+  },
+  "sc5": {
+    "startMs": 23700,
+    "endMs": 30000,
+    "words": [
+      {
+        "w": "tilt",
+        "startMs": 24000,
+        "endMs": 24220
+      },
+      {
+        "w": "the",
+        "startMs": 24220,
+        "endMs": 24460
+      },
+      {
+        "w": "louvres",
+        "startMs": 24460,
+        "endMs": 24860
+      },
+      {
+        "w": "for",
+        "startMs": 24860,
+        "endMs": 25000
+      },
+      {
+        "w": "light,",
+        "startMs": 25000,
+        "endMs": 25300
+      },
+      {
+        "w": "close",
+        "startMs": 25760,
+        "endMs": 26080
+      },
+      {
+        "w": "them",
+        "startMs": 26080,
+        "endMs": 26340
+      },
+      {
+        "w": "for",
+        "startMs": 26340,
+        "endMs": 26480
+      },
+      {
+        "w": "privacy,",
+        "startMs": 26480,
+        "endMs": 26880
+      },
+      {
+        "w": "total",
+        "startMs": 27400,
+        "endMs": 27740
+      },
+      {
+        "w": "control",
+        "startMs": 27740,
+        "endMs": 28360
+      },
+      {
+        "w": "at",
+        "startMs": 28360,
+        "endMs": 28960
+      },
+      {
+        "w": "a",
+        "startMs": 28960,
+        "endMs": 29060
+      },
+      {
+        "w": "touch.",
+        "startMs": 29060,
+        "endMs": 29360
+      }
+    ]
+  },
+  "sc6": {
+    "startMs": 30000,
+    "endMs": 38500,
+    "words": [
+      {
+        "w": "Book",
+        "startMs": 30300,
+        "endMs": 30480
+      },
+      {
+        "w": "your",
+        "startMs": 30480,
+        "endMs": 30640
+      },
+      {
+        "w": "free",
+        "startMs": 30640,
+        "endMs": 30840
+      },
+      {
+        "w": "home",
+        "startMs": 30840,
+        "endMs": 31080
+      },
+      {
+        "w": "survey",
+        "startMs": 31080,
+        "endMs": 31440
+      },
+      {
+        "w": "today.",
+        "startMs": 31440,
+        "endMs": 31780
+      },
+      {
+        "w": "We'll",
+        "startMs": 32320,
+        "endMs": 32640
+      },
+      {
+        "w": "measure,",
+        "startMs": 32640,
+        "endMs": 32940
+      },
+      {
+        "w": "advise",
+        "startMs": 33440,
+        "endMs": 33940
+      },
+      {
+        "w": "and",
+        "startMs": 33940,
+        "endMs": 34560
+      },
+      {
+        "w": "take",
+        "startMs": 34560,
+        "endMs": 34780
+      },
+      {
+        "w": "care",
+        "startMs": 34780,
+        "endMs": 35040
+      },
+      {
+        "w": "of",
+        "startMs": 35040,
+        "endMs": 35160
+      },
+      {
+        "w": "the",
+        "startMs": 35160,
+        "endMs": 35260
+      },
+      {
+        "w": "rest.",
+        "startMs": 35260,
+        "endMs": 35660
+      }
+    ]
+  }
+}

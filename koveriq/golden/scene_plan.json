@@ -1,0 +1,139 @@
+{
+  "version": "1.0",
+  "scenes": [
+    {
+      "id": "sc1",
+      "type": "broll",
+      "description": "Hook: louvres open on a bay window",
+      "start_seconds": 0.0,
+      "end_seconds": 5.5,
+      "script_section_id": "s1",
+      "role": "hook",
+      "kind": "photo_reveal",
+      "slots": {
+        "assetId": "a-bay",
+        "overline": "Plantation shutters",
+        "headline": "Light, your way.",
+        "subline": "Beautiful light and privacy for every room.",
+        "focus": {
+          "x": 0.5,
+          "y": 0.45
+        }
+      }
+    },
+    {
+      "id": "sc2",
+      "type": "broll",
+      "description": "Made to measure: slow push on arched windows",
+      "start_seconds": 5.5,
+      "end_seconds": 13.05,
+      "script_section_id": "s2",
+      "role": "product",
+      "kind": "photo_pan",
+      "slots": {
+        "assetId": "a-arches",
+        "overline": "Made to measure",
+        "headline": "Made for your windows",
+        "subline": "Bay windows, arches and awkward shapes",
+        "focus": {
+          "x": 0.5,
+          "y": 0.4
+        }
+      }
+    },
+    {
+      "id": "sc3",
+      "type": "animation",
+      "description": "Colours and finishes, natural oak highlighted",
+      "start_seconds": 13.05,
+      "end_seconds": 18.6,
+      "script_section_id": "s3",
+      "role": "options",
+      "kind": "swatches",
+      "slots": {
+        "title": "Your louvres. Your colour.",
+        "swatches": [
+          {
+            "label": "Pure White",
+            "color": "#FAF9F5"
+          },
+          {
+            "label": "Silk White",
+            "color": "#EFEADC"
+          },
+          {
+            "label": "Stone",
+            "color": "#CFC5B1"
+          },
+          {
+            "label": "Natural Oak",
+            "color": "#C39A68"
+          },
+          {
+            "label": "Walnut",
+            "color": "#6E4A32"
+          }
+        ],
+        "highlight": 3
+      }
+    },
+    {
+      "id": "sc4",
+      "type": "text_card",
+      "description": "Child safe: no cords or chains",
+      "start_seconds": 18.6,
+      "end_seconds": 23.7,
+      "script_section_id": "s4",
+      "role": "benefit",
+      "kind": "text_card",
+      "slots": {
+        "overline": "Child safe",
+        "headline": "No cords. No chains.",
+        "subline": "Child safe and pet friendly by design.",
+        "tone": "inverse"
+      }
+    },
+    {
+      "id": "sc5",
+      "type": "diagram",
+      "description": "Light and privacy: tilt, close, control",
+      "start_seconds": 23.7,
+      "end_seconds": 30.0,
+      "script_section_id": "s5",
+      "role": "benefit",
+      "kind": "steps",
+      "slots": {
+        "title": "Light and privacy",
+        "steps": [
+          "Tilt for light",
+          "Close for privacy",
+          "Total control"
+        ]
+      }
+    },
+    {
+      "id": "sc6",
+      "type": "text_card",
+      "description": "CTA: free home survey, website and brand",
+      "start_seconds": 30.0,
+      "end_seconds": 38.5,
+      "script_section_id": "s6",
+      "role": "cta",
+      "kind": "cta_endcard",
+      "slots": {
+        "overline": "Free home survey",
+        "cta": "Book your free home survey",
+        "steps": [
+          "Measure",
+          "Advise",
+          "Fit"
+        ],
+        "assetId": "a-living",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      }
+    }
+  ]
+}

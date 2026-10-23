@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "title": "Made-to-Measure Plantation Shutters",
+  "total_duration_seconds": 38.5,
+  "sections": [
+    {
+      "id": "s1",
+      "text": "Imagine waking up to soft, golden light, exactly the way you like it.",
+      "start_seconds": 0.6,
+      "end_seconds": 5.23
+    },
+    {
+      "id": "s2",
+      "text": "Our plantation shutters are made to measure for every window in your home. Bay windows and awkward shapes included.",
+      "start_seconds": 5.8,
+      "end_seconds": 12.77
+    },
+    {
+      "id": "s3",
+      "text": "Choose your louvre size and your colour, from crisp classic white to warm natural wood.",
+      "start_seconds": 13.3,
+      "end_seconds": 18.34
+    },
+    {
+      "id": "s4",
+      "text": "With no cords or chains, they're child safe and pet friendly by design.",
+      "start_seconds": 18.9,
+      "end_seconds": 23.44
+    },
+    {
+      "id": "s5",
+      "text": "Tilt the louvres for light. Close them for privacy. Total control, at a touch.",
+      "start_seconds": 24.0,
+      "end_seconds": 29.74
+    },
+    {
+      "id": "s6",
+      "text": "Book your free home survey today. We'll measure, advise, and take care of the rest.",
+      "start_seconds": 30.3,
+      "end_seconds": 35.88
+    }
+  ]
+}

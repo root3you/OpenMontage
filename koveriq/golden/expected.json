@@ -1,0 +1,11 @@
+{
+  "style": "clean",
+  "fmt": "16:9",
+  "durationMs": 38500,
+  "hookTimeMs": 2750,
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "toleranceSeconds": 0.1,
+  "snapshotTimes": [2.75, 15.8, 36.5]
+}

@@ -285,3 +285,19 @@ def test_before_label_hides_once_the_after_photo_wipes_in(tmp_path) -> None:
     _, args = _build(tmp_path, ["photo_reveal", "before_after", "cta_endcard"])
     scene = _read(args["out_dir"] / "compositions" / "sc2.html")
     assert re.search(r'tl\.to\("#sc2-blabel", \{ opacity: 0', scene)
+
+
+@pytest.mark.parametrize("style", sorted(STYLES))
+@pytest.mark.parametrize("fmt", sorted(FORMATS))
+def test_no_text_below_the_28px_phone_floor(tmp_path, style: str, fmt: str) -> None:
+    """HyperFrames' text_below_floor: 2.6% of a 1080 px short side."""
+    result, args = _build(tmp_path, ALL_KINDS, style=style, fmt=fmt)
+    for path in sorted((args["out_dir"] / "compositions").glob("*.html")):
+        sizes = [int(px) for px in re.findall(r"font-size: ?(\d+)px", _read(path))]
+        assert sizes and min(sizes) >= 28, (path.name, sorted(set(sizes))[:5])
+
+
+def test_long_company_name_shrinks_the_corner_mark_with_a_warning(tmp_path) -> None:
+    long_brand = {"companyName": "The Very Long Named Window Shutter Company Ltd", "website": "x.example"}
+    result, _ = _build(tmp_path, brand=long_brand)
+    assert any(w.startswith(("text_floor:brand", "text_fit:brand")) for w in result.lint_warnings)
