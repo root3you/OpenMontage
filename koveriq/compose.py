@@ -486,6 +486,11 @@ def load_params_schema() -> dict[str, Any]:
 
 
 _WORD = re.compile(r"[0-9A-Za-zÀ-ɏ]+")
+# Slots that state a fact or must match the brief word for word.
+FIXED_SLOTS = {"cta", "offer", "terms", "badge", "town"}
+# Words whose removal flips or widens a claim.
+NEGATIONS = {"no", "not", "never", "without", "non", "none", "nothing", "nor", "cannot"}
+QUALIFIERS = {"only", "from", "up", "excludes", "excluding", "except", "min", "minimum", "max", "maximum", "starting", "plus", "selected"}
 
 
 def _words(text: str) -> list[str]:
@@ -516,13 +521,27 @@ def params_errors(state: dict[str, Any], params: Any) -> list[str]:
         for slot, text in (change.get("shorten_text") or {}).items():
             where = f"params.scenes.{sid}.shorten_text.{slot}"
             current = scene["slots"].get(slot)
+            if slot in FIXED_SLOTS:
+                errors.append(f"{where}: the {slot} slot states a fact or the brief's CTA and cannot be shortened")
+                continue
             if slot not in TEXT_SLOTS[scene["kind"]] or not isinstance(current, str):
                 errors.append(f"{where}: {scene['kind']} has no text slot {slot!r} to shorten")
                 continue
             if len(text) >= len(current):
                 errors.append(f"{where}: must be shorter than the current {len(current)} characters")
-            if not _is_subsequence(_words(text), _words(current)):
+            old_words, new_words = _words(current), _words(text)
+            if not _is_subsequence(new_words, old_words):
                 errors.append(f"{where}: may only drop words from {current!r}, not add or change them")
+                continue
+            kept = set(new_words)
+            for group, label in ((NEGATIONS, "negation"), (QUALIFIERS, "qualifier")):
+                dropped = sorted({w for w in old_words if w in group} - kept)
+                if dropped:
+                    errors.append(f"{where}: would drop the {label} {dropped}, which changes the claim")
+            figures = {w for w in old_words if any(ch.isdigit() for ch in w)}
+            shown = {w for w in new_words if any(ch.isdigit() for ch in w)}
+            if shown and shown != figures:
+                errors.append(f"{where}: keep all the figures {sorted(figures)} or none of them")
         if not errors:
             slots, _ = _apply_scene_params(scene, change)
             errors.extend(slot_errors({"kind": scene["kind"], "slots": slots}, prefix=f"params.scenes.{sid}"))

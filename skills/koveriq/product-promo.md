@@ -102,9 +102,12 @@ customer (house numbers, plates, faces) → report it as a `pii_possible`
 warning (it never fails the render).
 
 You may call `set_composition_params` **once**, with per-scene
-`crop_focus` `{x, y}`, `shorten_text` (a shorter line made only of words
-already in that slot) or `font_scale` (0.8–1.0). Anything else is refused.
-If the frames are fine, make no call.
+`crop_focus` `{x, y}`, `shorten_text` or `font_scale` (0.8–1.0). Anything
+else is refused. `shorten_text` gives a shorter overline, headline, subline,
+title or label made only of words already in it, in order; it must keep every
+negation ("no", "not", "without") and qualifier ("up to", "from", "only"),
+and keep all of its figures or none. The CTA, offer, terms, badge and town are
+never shortened. If the frames are fine, make no call.
 
 ## Runtime
 

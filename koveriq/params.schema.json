@@ -27,7 +27,7 @@
             }
           },
           "shorten_text": {
-            "description": "Replacement for single-line text slots; each must be shorter and made only of words already in that slot, in order.",
+            "description": "Replacement for single-line text slots (not cta, offer, terms, badge or town). Each must be shorter, made only of words already in that slot in order, keep every negation and qualifier, and keep all of its figures or none.",
             "type": "object",
             "minProperties": 1,
             "maxProperties": 4,
