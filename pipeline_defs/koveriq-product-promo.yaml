@@ -1,0 +1,140 @@
+name: koveriq-product-promo
+version: "1.0"
+description: >
+  KoverIQ product promo: a 20-60 s branded video of one catalogue product, built
+  from the tenant's own photos and the KoverIQ HyperFrames scene-kind templates.
+  Run headless by the KoverIQ video worker. The brief is supplied by KoverIQ, so
+  there is no research or proposal stage and no source is ever invented; every
+  checkpoint is written as approved under the submitted brief (decision_log
+  approval_policy "brief-preauth"). Code owns stage order, timeouts and uploads;
+  the agent only writes the script, plans scenes and reviews snapshot frames.
+category: custom
+stability: beta
+default_checkpoint_policy: guided
+
+extensions:
+  custom_scripts: false
+  custom_playbooks: false
+  custom_skills: false
+  custom_tools: false
+
+required_skills:
+  - koveriq/product-promo
+  - pipelines/animation/script-director
+  - pipelines/animation/scene-director
+  - meta/voice-performance-director
+  - meta/reviewer
+
+orchestration:
+  mode: koveriq-stage-runner
+  skill: koveriq/product-promo
+  budget_default_usd: 2.00
+  max_revisions_per_stage: 3
+  max_send_backs: 0
+  max_wall_time_minutes: 40
+
+stages:
+  - name: idea
+    skill: koveriq/product-promo
+    produces:
+      - brief
+      - decision_log
+    tools_available: []
+    checkpoint_required: true
+    human_approval_default: false
+    review_focus:
+      - Brief is written by runner code from the KoverIQ request, never by the agent
+      - Every number, price, date, option and the CTA come from brief.metadata.facts / brief.cta
+      - decision_log records approval_policy brief-preauth and render_runtime_selection hyperframes
+    success_criteria:
+      - Schema-valid brief with metadata.approval_policy "brief-preauth"
+      - Input photos fetched, verified and normalised before the stage completes
+
+  - name: script
+    skill: koveriq/product-promo
+    required_artifacts_in:
+      - brief
+    produces:
+      - script
+    tools_available: []
+    checkpoint_required: true
+    human_approval_default: false
+    review_focus:
+      - British English, no figures, prices or dates outside the brief facts
+      - No personal data and no competitor brands
+      - CTA wording is brief.cta; the URL is the brand website only
+      - Word count fits the target length at 2.3-2.7 words per second
+    success_criteria:
+      - Schema-valid script, one section per planned scene
+      - Passes the KoverIQ guardrails within 3 revisions
+
+  - name: scene_plan
+    skill: koveriq/product-promo
+    required_artifacts_in:
+      - brief
+      - script
+    produces:
+      - scene_plan
+    tools_available: []
+    checkpoint_required: true
+    human_approval_default: false
+    review_focus:
+      - Scene order follows the product-promo grammar (koveriq/scene_grammar.yaml)
+      - Every scene has a kind and slots valid against koveriq/scene_kinds.schema.json
+      - Photos are assigned by assetId only, from the supplied assets
+    success_criteria:
+      - Schema-valid scene_plan plus valid KoverIQ kind and slots per scene
+      - Passes the KoverIQ guardrails within 3 revisions
+
+  - name: assets
+    skill: koveriq/product-promo
+    required_artifacts_in:
+      - script
+      - scene_plan
+    produces:
+      - asset_manifest
+    tools_available:
+      - piper_tts
+      - transcriber
+    checkpoint_required: true
+    human_approval_default: false
+    review_focus:
+      - Narration uses an allowlisted voice from koveriq/voices.yaml
+      - Word timings come from the transcript, which is also the audio QA check
+    success_criteria:
+      - Narration audio and word timings for every scene
+
+  - name: edit
+    skill: koveriq/product-promo
+    required_artifacts_in:
+      - scene_plan
+      - asset_manifest
+    produces:
+      - edit_decisions
+    tools_available:
+      - hyperframes_compose
+    checkpoint_required: true
+    human_approval_default: false
+    review_focus:
+      - Timeline is built in code from word timings (koveriq.compose.build_composition)
+      - Snapshot review may only call apply_params once (crop focus, shorter line, font scale)
+    success_criteria:
+      - Composition passes `hyperframes lint` with 0 errors in every requested format
+
+  - name: compose
+    skill: koveriq/product-promo
+    required_artifacts_in:
+      - edit_decisions
+      - asset_manifest
+    produces:
+      - render_report
+    tools_available:
+      - hyperframes_compose
+      - audio_mixer
+    checkpoint_required: true
+    human_approval_default: false
+    review_focus:
+      - render_runtime stays hyperframes; no runtime swap
+      - Duration within 0.1 s of the timeline, resolution matches the format
+    success_criteria:
+      - One MP4 and one poster per requested format, plus captions and the licence manifest
