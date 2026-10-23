@@ -18,11 +18,12 @@ Testing (`chrome-headless-shell` 152.0.7977.30) already cached, render quality
 | 2 | after the text-floor fix | 0.21 s | 1.31 s, 0 errors, 0 warnings | 12.95 s | 56.85 s | **73.4 s** |
 | 3 | after the first review fixes | 0.06 s | 0.84 s, 0 errors, 0 warnings | 6.63 s | 40.59 s | **50.3 s** |
 | 4 | final (after the second review pass) | 0.08 s | 0.75 s, 0 errors, 0 warnings | 19.86 s | 41.32 s | **63.0 s** |
+| 5 | lane W3 (CTA fit ladder, optional website, captions code; the golden keeps captions off) | 0.11 s | 1.16 s, 0 errors, 0 warnings | 6.87 s | 36.62 s | **45.5 s** |
 
 All runs used the same inputs. The spread, mostly in the snapshot step, is
 machine load.
 
-Output of the final run (every run measured the same duration, size and loudness):
+Output of the final W2 run (every run, W3's run 5 included, measured the same duration, size and loudness):
 
 | Check | Expected | Measured | Result |
 |---|---|---|---|
@@ -49,3 +50,14 @@ their clipping frames (intended).
   three snapshots in `out/snapshots/` are the natural references for it.
 - Run with `KOVERIQ_HYPERFRAMES_VERSION` unset to stay on the pinned 0.8.185;
   `koveriq.hyperframes` switches off telemetry, update checks and auto-install.
+
+## Lane W3 evidence (captions and the end card)
+
+The golden keeps captions off. The rendered evidence for burned-in captions
+and for the end card's CTA (40/80/120 characters, with and without a website)
+is the opt-in suite `KOVERIQ_HF_SNAPSHOT=1 pytest koveriq/tests/test_snapshots.py`
+(24 cases, about 5 minutes): every case is linted, audited with `hyperframes
+check` (no held layout error; with captions on, `--caption-zone` fails any scene
+text inside the caption band) and snapshotted, with one contact sheet per case
+in `output/koveriq-snapshots/` (git-ignored; `make golden` wipes
+`koveriq/golden/out/`, so the evidence lives outside it).

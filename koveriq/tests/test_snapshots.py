@@ -6,7 +6,8 @@ Each composition is linted, audited in the browser with `hyperframes check`
 (no layout errors: nothing overflows, is clipped or overlaps; with captions
 on, the --caption-zone gate fails any scene text inside the caption band) and
 snapshotted. Frames and one contact sheet per case go to
-$KOVERIQ_SNAPSHOT_DIR (default koveriq/golden/out/w3-snapshots, git-ignored).
+$KOVERIQ_SNAPSHOT_DIR (default output/koveriq-snapshots at the repo root,
+git-ignored; not under koveriq/golden/out, which `make golden` wipes).
 
 Opt-in: needs Node, the pinned HyperFrames CLI and its Chrome in the cache.
 
@@ -33,7 +34,7 @@ pytestmark = pytest.mark.skipif(
     reason="set KOVERIQ_HF_SNAPSHOT=1 (needs node and the hyperframes CLI cache)",
 )
 
-OUT = Path(os.environ.get("KOVERIQ_SNAPSHOT_DIR") or golden.GOLDEN_DIR / "out" / "w3-snapshots")
+OUT = Path(os.environ.get("KOVERIQ_SNAPSHOT_DIR") or golden.GOLDEN_DIR.parents[1] / "output" / "koveriq-snapshots")
 CARD_SECONDS = 5
 SITE = {"companyName": "Demo Shutters Co.", "website": "demo-shutters.example"}
 NO_SITE = {"companyName": "Demo Shutters Co."}

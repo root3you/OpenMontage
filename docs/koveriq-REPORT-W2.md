@@ -158,7 +158,8 @@ class CompositionResult:
     lint_warnings: list[str]
 
 def build_composition(scene_plan: dict, script: dict, timings: dict, assets: dict[str, pathlib.Path],
-                      style: str, fmt: str, brand: dict, out_dir: pathlib.Path) -> CompositionResult: ...
+                      style: str, fmt: str, brand: dict, out_dir: pathlib.Path,
+                      *, captions: bool = False) -> CompositionResult: ...  # captions: lane W3
 def apply_params(comp_dir: pathlib.Path, params: dict) -> None: ...
 ```
 
@@ -209,8 +210,10 @@ optional `role`:
   silent; mux the narration when packaging.
 - `brand`:
   - `companyName`: at most 60 characters.
-  - `website`: at most 80 characters, no spaces; the scheme is stripped for
-    display. It is shown only on the end card.
+  - `website`: optional (lane W3: missing, None or "" means no website pill;
+    the wordmark then closes the end card). When present, at most 80
+    characters, no spaces; the scheme is stripped for display. It is shown
+    only on the end card.
   - `logoPath`: PNG, JPEG, WebP or SVG.
   - `palette`: a partial override of `bg`, `surface`, `ink`, `muted`, `accent`
     and `accentInk`, each `#RRGGBB`.
@@ -223,12 +226,21 @@ optional `role`:
 
 Rebuilding into the same directory replaces the generated files.
 
+**Lane W3 additions.** `cta_endcard.cta` takes up to 120 characters (the
+contract's `brief.cta`) and is never cut: two lines first, then three or four,
+shrinking down to 45% of the base size, lines balanced. `captions=True` adds
+`compositions/captions.html` on a `data-track-kind="captions"` track (2-3 word
+groups from the timings' words, not on the end card) and lays the captioned
+scenes out above the caption band; `captions` is a reserved scene id.
+
 **`lint_warnings`** are the builder's own static checks, not HyperFrames lint:
 - `text_fit:<sid>.<slot>`
 - `text_floor:brand.companyName`
 - `photo_upscaled:<sid>.<slot>`
 - `palette_contrast:<fg>/<bg>`
 - `word_outside_scene:<sid>.words[i]`
+- `captions_empty:` (captions on, but no words in a captioned scene) and
+  `text_fit:captions.g<N>` (lane W3)
 
 Before rendering, run `koveriq.hyperframes.lint(comp_dir)`, which returns
 errors and warnings. Then use `snapshot(...)` and `render(...)`. All three run
