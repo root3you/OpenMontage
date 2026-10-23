@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/root3you/OpenMontage/koveriq/scene_kinds.schema.json",
+  "title": "KoverIQ scene kind and slots",
+  "description": "A KoverIQ scene names one template kind and fills its typed slots. Validates a {kind, slots} object or a whole scene_plan scene carrying those keys. Text limits are hard: they are what the templates fit at 16:9, 9:16 and 1:1. Photos are referenced by assetId only.",
+  "type": "object",
+  "required": ["kind", "slots"],
+  "properties": {
+    "kind": {
+      "enum": [
+        "photo_pan",
+        "photo_reveal",
+        "option_chips",
+        "swatches",
+        "text_card",
+        "offer_card",
+        "steps",
+        "before_after",
+        "town_card",
+        "cta_endcard"
+      ]
+    },
+    "slots": { "type": "object" },
+    "role": { "type": "string", "pattern": "^[a-z][a-z_]{1,23}$" }
+  },
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "photo_pan" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/photo_pan" } } } },
+    { "if": { "properties": { "kind": { "const": "photo_reveal" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/photo_reveal" } } } },
+    { "if": { "properties": { "kind": { "const": "option_chips" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/option_chips" } } } },
+    { "if": { "properties": { "kind": { "const": "swatches" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/swatches" } } } },
+    { "if": { "properties": { "kind": { "const": "text_card" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/text_card" } } } },
+    { "if": { "properties": { "kind": { "const": "offer_card" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/offer_card" } } } },
+    { "if": { "properties": { "kind": { "const": "steps" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/steps" } } } },
+    { "if": { "properties": { "kind": { "const": "before_after" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/before_after" } } } },
+    { "if": { "properties": { "kind": { "const": "town_card" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/town_card" } } } },
+    { "if": { "properties": { "kind": { "const": "cta_endcard" } }, "required": ["kind"] }, "then": { "properties": { "slots": { "$ref": "#/$defs/cta_endcard" } } } }
+  ],
+  "$defs": {
+    "line": {
+      "description": "One trimmed line of on-screen text: no control characters, no leading or trailing space.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\s\\u0000-\\u001F\\u007F](?:[^\\u0000-\\u001F\\u007F]*[^\\s\\u0000-\\u001F\\u007F])?$"
+    },
+    "assetId": {
+      "description": "Id of a supplied photo (assets[assetId]). Letters, digits, '-' and '_' only, so it is also a safe file name.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+    },
+    "focus": {
+      "description": "Crop focus as a fraction of the photo: x from left, y from top.",
+      "type": "object",
+      "required": ["x", "y"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "hexColor": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+    "overline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 28 }] },
+    "photo_pan": {
+      "description": "Full-bleed photo with a slow push or pan and a short text card.",
+      "type": "object",
+      "required": ["assetId"],
+      "additionalProperties": false,
+      "properties": {
+        "assetId": { "$ref": "#/$defs/assetId" },
+        "focus": { "$ref": "#/$defs/focus" },
+        "direction": { "enum": ["in", "out", "left", "right"] },
+        "overline": { "$ref": "#/$defs/overline" },
+        "headline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 40 }] },
+        "subline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 72 }] }
+      }
+    },
+    "photo_reveal": {
+      "description": "A photo revealed by opening louvres (or a block wipe in bold_offer), with a headline.",
+      "type": "object",
+      "required": ["assetId", "headline"],
+      "additionalProperties": false,
+      "properties": {
+        "assetId": { "$ref": "#/$defs/assetId" },
+        "focus": { "$ref": "#/$defs/focus" },
+        "overline": { "$ref": "#/$defs/overline" },
+        "headline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 40 }] },
+        "subline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 72 }] }
+      }
+    },
+    "option_chips": {
+      "description": "Product options as chips, revealed as the narration names them. Optional background photo.",
+      "type": "object",
+      "required": ["chips"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 32 }] },
+        "chips": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 18 }] }
+        },
+        "assetId": { "$ref": "#/$defs/assetId" },
+        "focus": { "$ref": "#/$defs/focus" }
+      }
+    },
+    "swatches": {
+      "description": "Colour or finish swatches with labels; one may be highlighted.",
+      "type": "object",
+      "required": ["swatches"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 32 }] },
+        "swatches": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["label", "color"],
+            "additionalProperties": false,
+            "properties": {
+              "label": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 16 }] },
+              "color": { "$ref": "#/$defs/hexColor" }
+            }
+          }
+        },
+        "highlight": { "type": "integer", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "text_card": {
+      "description": "A statement on a plain background.",
+      "type": "object",
+      "required": ["headline"],
+      "additionalProperties": false,
+      "properties": {
+        "overline": { "$ref": "#/$defs/overline" },
+        "headline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 48 }] },
+        "subline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 90 }] },
+        "tone": { "enum": ["light", "dark", "accent"] }
+      }
+    },
+    "offer_card": {
+      "description": "An offer with its terms. Every figure and date must come from the brief.",
+      "type": "object",
+      "required": ["offer"],
+      "additionalProperties": false,
+      "properties": {
+        "overline": { "$ref": "#/$defs/overline" },
+        "offer": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 32 }] },
+        "terms": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 80 }] },
+        "badge": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 14 }] }
+      }
+    },
+    "steps": {
+      "description": "Two to four numbered steps.",
+      "type": "object",
+      "required": ["steps"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 32 }] },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 24 }] }
+        }
+      }
+    },
+    "before_after": {
+      "description": "A before photo wiped to an after photo.",
+      "type": "object",
+      "required": ["beforeAssetId", "afterAssetId"],
+      "additionalProperties": false,
+      "properties": {
+        "beforeAssetId": { "$ref": "#/$defs/assetId" },
+        "afterAssetId": { "$ref": "#/$defs/assetId" },
+        "beforeFocus": { "$ref": "#/$defs/focus" },
+        "afterFocus": { "$ref": "#/$defs/focus" },
+        "beforeLabel": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 14 }] },
+        "afterLabel": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 14 }] },
+        "headline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 40 }] }
+      }
+    },
+    "town_card": {
+      "description": "The town of an install. Never a street, house number or postcode.",
+      "type": "object",
+      "required": ["town"],
+      "additionalProperties": false,
+      "properties": {
+        "overline": { "$ref": "#/$defs/overline" },
+        "town": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 28 }] },
+        "subline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 60 }] },
+        "assetId": { "$ref": "#/$defs/assetId" },
+        "focus": { "$ref": "#/$defs/focus" }
+      }
+    },
+    "cta_endcard": {
+      "description": "The call to action (brief.cta), the brand website and the brand lock-up. The website comes from the brand kit, never from a slot.",
+      "type": "object",
+      "required": ["cta"],
+      "additionalProperties": false,
+      "properties": {
+        "overline": { "$ref": "#/$defs/overline" },
+        "cta": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 40 }] },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 16 }] }
+        },
+        "assetId": { "$ref": "#/$defs/assetId" },
+        "focus": { "$ref": "#/$defs/focus" }
+      }
+    }
+  }
+}

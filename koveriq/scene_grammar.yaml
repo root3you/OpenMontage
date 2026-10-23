@@ -1,0 +1,30 @@
+# KoverIQ scene grammars (spec §8.4). Binding for the scene_plan stage.
+#
+# roles: ordered. Scenes fill the roles in this order; each role takes
+#   between `min` and `max` consecutive scenes, and only the listed kinds.
+#   A scene may name its role explicitly (`role`); otherwise the check finds
+#   an assignment that fits.
+# lengths: per target length (brief.lengthSeconds):
+#   scenes  - allowed scene count
+#   seconds - allowed total duration after TTS (sum of scene spans)
+#   words   - narration words, target x 2.3..2.7 words per second
+version: 1
+
+words_per_second: {min: 2.3, max: 2.7}
+scene_seconds: {min: 1.5, max: 12.0}
+
+grammars:
+  product_promo:
+    description: hook -> product -> options -> benefit -> craft/trust -> CTA
+    roles:
+      - {role: hook, kinds: [photo_reveal, photo_pan, text_card], min: 1, max: 1}
+      - {role: product, kinds: [photo_pan, photo_reveal, text_card], min: 1, max: 2}
+      - {role: options, kinds: [option_chips, swatches], min: 1, max: 2}
+      - {role: benefit, kinds: [text_card, photo_pan, steps], min: 0, max: 2}
+      - {role: craft_trust, kinds: [photo_pan, text_card, steps], min: 0, max: 1}
+      - {role: cta, kinds: [cta_endcard], min: 1, max: 1}
+    lengths:
+      "20": {scenes: {min: 4, max: 5}, seconds: {min: 18, max: 23}, words: {min: 46, max: 54}}
+      "30": {scenes: {min: 5, max: 7}, seconds: {min: 27, max: 34.5}, words: {min: 69, max: 81}}
+      "45": {scenes: {min: 6, max: 8}, seconds: {min: 40.5, max: 52}, words: {min: 104, max: 122}}
+      "60": {scenes: {min: 7, max: 9}, seconds: {min: 54, max: 69}, words: {min: 138, max: 162}}
