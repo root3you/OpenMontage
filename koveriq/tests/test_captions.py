@@ -301,3 +301,29 @@ def test_a_single_word_too_long_for_the_box_is_shown_with_a_warning(tmp_path) ->
     result = build_composition(plan, script, timings, make_assets(tmp_path), "clean", "9:16", brand(), out, captions=True)
     assert any(w.startswith("text_fit:captions.g1") for w in result.lint_warnings)
     assert "Pneumonoultramicroscopicsilicovolcanoconiosis-Pneumono" in _read(out / "compositions" / "captions.html")
+
+
+def test_a_cue_too_short_for_both_fades_is_cut_not_faded() -> None:
+    """Two fades on one opacity inside a few frames flicker: a short cue fades in
+    within its span and is hard-cut (visibility hidden) instead of faded out."""
+    cues = [caps.Cue("sc1", 1.0, 1.2, "Hi"), caps.Cue("sc1", 1.2, 2.0, "there my friend")]
+    lines = caps.tweens(cues, ["g1", "g2"]).lines
+    short = [line for line in lines if '"#g1"' in line]
+    assert not any(line.startswith('tl.to("#g1"') for line in short)
+    assert 'duration: 0.14' in next(line for line in short if line.startswith("tl.fromTo"))
+    assert short[-1] == 'tl.set("#g1", { visibility: "hidden" }, 1.2);'
+    tiny = caps.tweens([caps.Cue("sc1", 3.0, 3.06, "Oh")], ["g3"]).lines
+    assert "duration: 0.06" in next(line for line in tiny if line.startswith("tl.fromTo"))
+    full = [line for line in lines if '"#g2"' in line]
+    assert any(line.startswith('tl.to("#g2", { opacity: 0, duration: 0.12') for line in full)
+
+
+def test_a_word_running_past_the_cut_is_still_captioned() -> None:
+    """A word belongs to the scene it starts in (as for beats); its caption
+    closes at the cut."""
+    words = _words(2400, "Light your way.")  # "way." ends at 3.0 + 0.04 s
+    words[-1]["endMs"] = 3100
+    timings = {"sc1": {"startMs": 0, "endMs": 3000, "words": words}}
+    cues = caps.build_cues([{"id": "sc1", "kind": "text_card"}], timings, fits=lambda t: True)
+    assert [c.text for c in cues] == ["Light your way"]
+    assert cues[0].end == pytest.approx(3.0 - caps.EDGE)

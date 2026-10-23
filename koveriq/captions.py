@@ -127,7 +127,9 @@ def build_cues(scenes: Sequence[Mapping[str, Any]], timings: Mapping[str, Any], 
             continue
         timing = timings[scene["id"]]
         start, end = timing["startMs"], timing["endMs"]
-        inside = [w for w in timing.get("words") or [] if start - 50 <= w["startMs"] <= w["endMs"] <= end + 50]
+        # A word belongs to the scene it starts in (as for beats); its caption
+        # still closes at the cut.
+        inside = [w for w in timing.get("words") or [] if start - 50 <= w["startMs"] <= min(w["endMs"], end + 50)]
         groups = group_words(inside, fits=fits)
         opens = [max(g[0]["startMs"] / 1000 - LEAD, start / 1000, FIRST_AT) for g in groups]
         last_close = end / 1000 - EDGE
@@ -147,10 +149,14 @@ def tweens(cues: Sequence[Cue], ids: Sequence[str]) -> Tweens:
     tw = Tweens()
     for cue, el_id in zip(cues, ids):
         sel = f"#{el_id}"
-        fade_out = min(FADE_OUT, (cue.end - cue.start) / 3)
+        span = cue.end - cue.start
         tw.set(sel, {"visibility": "visible"}, cue.start)
-        tw.from_to(sel, {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": FADE_IN, "ease": "power2.out"}, cue.start)
-        tw.to(sel, {"opacity": 0, "duration": round(fade_out, 3), "ease": "power2.in"}, cue.end - fade_out)
+        fade_in = round(min(FADE_IN, span), 3)
+        tw.from_to(sel, {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": fade_in, "ease": "power2.out"}, cue.start)
+        # Two fades on one opacity within a few frames flicker: a cue too short
+        # for both is hard-cut by the visibility flip instead of faded out.
+        if span >= FADE_IN + FADE_OUT:
+            tw.to(sel, {"opacity": 0, "duration": FADE_OUT, "ease": "power2.in"}, cue.end - FADE_OUT)
         tw.set(sel, {"visibility": "hidden"}, cue.end)
     return tw
 
