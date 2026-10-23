@@ -1,0 +1,38 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-chipwrap { position: absolute; display: flex; flex-direction: column; }
+.k-panel { display: flex; flex-direction: column; gap: 20px; }
+.k-onphoto .k-panel { background: var(--surface); border-radius: {{ radius }}px; box-shadow: 0 26px 70px rgba(0,0,0,.25); }
+.k-chiprow { display: flex; gap: 18px; }
+{% if F.name == "landscape" %}
+.k-chipwrap { left: {{ F.pad_x }}px; bottom: {{ F.pad_bottom }}px; }
+.k-plain { left: {{ F.pad_x }}px; top: {{ F.pad_top }}px; width: {{ F.content_w }}px; height: {{ F.safe_h }}px; bottom: auto; justify-content: center; }
+.k-decor { left: 1280px; top: -60px; width: 760px; height: 1200px; }
+{% elif F.name == "portrait" %}
+.k-chipwrap { left: {{ F.pad_x }}px; bottom: {{ F.pad_bottom }}px; }
+.k-plain { top: {{ F.pad_top }}px; height: {{ F.safe_h }}px; bottom: auto; justify-content: center; }
+.k-decor { left: -60px; top: 1560px; width: 1200px; height: 420px; }
+{% else %}
+.k-chipwrap { left: {{ F.pad_x }}px; bottom: {{ F.pad_bottom }}px; }
+.k-plain { top: {{ F.pad_top }}px; height: {{ F.safe_h }}px; bottom: auto; justify-content: center; }
+.k-decor { left: 720px; top: -40px; width: 420px; height: 1160px; }
+{% endif %}
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+{% if v.photo %}
+{{ k.photo(v.photo) }}
+<div class="k-shade" data-layout-ignore></div>
+{% else %}
+<div class="k-fill"></div>
+<div class="k-decor" id="{{ v.decor }}" data-layout-ignore></div>
+{% endif %}
+<div class="k-chipwrap{% if v.panel.on_photo %} k-onphoto{% else %} k-plain{% endif %}">
+<div class="k-panel" id="{{ v.panel.id }}"{% if v.panel.on_photo %} style="padding:{{ v.panel.pad }}"{% endif %}>
+{{ k.text(v.title, sid ~ "-title", "k-head", "h2") }}
+{% for row in v.rows %}
+<div class="k-chiprow">{% for c in row %}<div class="k-chip k-item" id="{{ c.id }}" style="font-size:{{ v.chip_px }}px">{{ c.text }}</div>{% endfor %}</div>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

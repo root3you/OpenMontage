@@ -1,0 +1,7 @@
+{% extends "scene.html.j2" %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+{{ k.photo(v.photo) }}
+<div class="k-shade" data-layout-ignore></div>
+{{ k.card(v.card, sid) }}
+{% endblock %}

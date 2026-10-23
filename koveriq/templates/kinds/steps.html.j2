@@ -1,0 +1,25 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-stepsblock { left: {{ F.pad_x }}px; top: {{ F.pad_top }}px; width: {{ F.content_w }}px; height: {{ F.safe_h }}px; justify-content: center; gap: {{ 56 if v.row else 40 }}px; }
+.k-steps { display: flex; }
+.k-steps-row { flex-direction: row; align-items: flex-start; }
+.k-steps-col { flex-direction: column; gap: 34px; }
+.k-step { display: flex; gap: {{ 22 if v.row else 32 }}px; {{ "flex-direction: column; align-items: flex-start;" if v.row else "flex-direction: row; align-items: center;" }} }
+.k-steplabel { color: var(--ink); }
+{% if F.name == "landscape" %}.k-decor { left: 1500px; top: -60px; width: 520px; height: 1200px; }
+{% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1540px; width: 1200px; height: 440px; }
+{% else %}.k-decor { left: 800px; top: -40px; width: 340px; height: 1160px; }{% endif %}
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+<div class="k-fill"></div>
+<div class="k-decor" id="{{ v.decor }}" data-layout-ignore></div>
+<div class="k-col k-stepsblock">
+{{ k.text(v.title, sid ~ "-title", "k-head", "h2") }}
+<div class="k-steps {{ 'k-steps-row' if v.row else 'k-steps-col' }}"{% if v.row %} style="gap:{{ v.gap }}px"{% endif %}>
+{% for it in v.entries %}
+<div class="k-step" id="{{ it.id }}"{% if v.row %} style="width:{{ v.label_w }}px"{% endif %}><div class="k-num" style="width:{{ v.circle }}px;height:{{ v.circle }}px;font-size:{{ v.num_px }}px">{{ it.n }}</div>{{ k.text(it.label, it.id ~ "-label", "k-item k-steplabel") }}</div>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

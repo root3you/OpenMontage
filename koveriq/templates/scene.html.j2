@@ -1,0 +1,24 @@
+{%- import "_macros.j2" as k -%}
+<template>
+<style>
+#root { {{ root_vars }} position: absolute; inset: 0; overflow: hidden; isolation: isolate; background: var(--bg); color: var(--ink); }
+{{ style_css }}
+{% block css %}{% endblock %}
+</style>
+<div id="root" data-composition-id="{{ sid }}" data-width="{{ F.w }}" data-height="{{ F.h }}" data-kind="{{ kind }}">
+{% block body %}{% endblock %}
+{% if tin %}{{ k.transition(sid ~ "-tin", "in", transition, bars) }}
+{% endif %}
+{% if tout %}{{ k.transition(sid ~ "-tout", "out", transition, bars) }}
+{% endif %}
+</div>
+<script>
+(function () {
+  var tl = gsap.timeline({ paused: true });
+{% for line in tweens %}
+  {{ line }}
+{% endfor %}
+  window.__timelines["{{ sid }}"] = tl;
+})();
+</script>
+</template>

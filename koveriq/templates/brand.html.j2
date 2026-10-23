@@ -1,0 +1,19 @@
+<template>
+<style>
+#root { position: absolute; inset: 0; overflow: hidden; }
+.k-bug { position: absolute; display: flex; align-items: center; padding: {{ pad }}; border-radius: {{ radius }}px; background: {{ chip_bg }}; box-shadow: 0 6px 20px rgba(0,0,0,.16); }
+.k-bug img { display: block; height: {{ logo_h }}px; width: auto; }
+.k-mark { {{ mark_css }} color: {{ mark_color }}; white-space: nowrap; }
+</style>
+<div id="root" data-composition-id="brand" data-width="{{ F.w }}" data-height="{{ F.h }}">
+<div class="k-bug" id="brand-bug" style="left:{{ left }}px;top:{{ top }}px">{% if logo %}<img src="{{ logo }}" alt="">{% else %}<div class="k-mark" id="brand-mark" style="{{ mark.style }}">{{ mark.html }}</div>{% endif %}</div>
+</div>
+<script>
+(function () {
+  var tl = gsap.timeline({ paused: true });
+  tl.fromTo("#brand-bug", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 0.3);
+  tl.to("#brand-bug", { opacity: 0, duration: 0.3, ease: "power1.in" }, {{ fade_out }});
+  window.__timelines["brand"] = tl;
+})();
+</script>
+</template>

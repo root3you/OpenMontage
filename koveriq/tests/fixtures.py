@@ -42,7 +42,7 @@ KIND_EXAMPLES: dict[str, dict] = {
         "overline": "Child safe",
         "headline": "No cords. No chains.",
         "subline": "Safe for children and pets by design.",
-        "tone": "dark",
+        "tone": "inverse",
     },
     "offer_card": {
         "overline": "This month",

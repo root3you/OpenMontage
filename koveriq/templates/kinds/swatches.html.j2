@@ -1,0 +1,27 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-swwrap { position: absolute; left: {{ F.pad_x }}px; top: {{ F.pad_top }}px; width: {{ F.content_w }}px; height: {{ F.safe_h }}px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: {{ 56 if F.name == "landscape" else 48 }}px; }
+.k-swgrid { display: flex; flex-direction: column; align-items: center; gap: 44px; }
+.k-swrow { display: flex; justify-content: center; }
+.k-sw { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.k-dot { position: relative; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(0,0,0,.10), 0 12px 28px rgba(0,0,0,.18); }
+.k-ring { position: absolute; left: -14px; top: -14px; right: -14px; bottom: -14px; border-radius: 50%; border: 6px solid var(--accent); }
+.k-swlabel { color: var(--ink); text-align: center; }
+.k-swwrap > .k-head { text-align: center; }
+{% if F.name == "landscape" %}.k-decor { left: -80px; top: 860px; width: 2080px; height: 320px; }
+{% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1560px; width: 1200px; height: 420px; }
+{% else %}.k-decor { left: -60px; top: 940px; width: 1200px; height: 200px; }{% endif %}
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+<div class="k-fill" style="background:var(--surface)"></div>
+<div class="k-decor" id="{{ v.decor }}" data-layout-ignore></div>
+<div class="k-swwrap">
+{{ k.text(v.title, sid ~ "-title", "k-head", "h2") }}
+<div class="k-swgrid">
+{% for row in v.rows %}
+<div class="k-swrow" style="gap:{{ v.gap }}px">{% for sw in row %}<div class="k-sw" id="{{ sw.id }}" style="width:{{ v.col_w }}px"><div class="k-dot" style="width:{{ v.dot }}px;height:{{ v.dot }}px;background:{{ sw.color }}">{% if sw.ring %}<div class="k-ring" id="{{ sw.ring }}"></div>{% endif %}</div>{{ k.text(sw.label, sw.id ~ "-label", "k-item k-swlabel") }}</div>{% endfor %}</div>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

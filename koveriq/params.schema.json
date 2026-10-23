@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/root3you/OpenMontage/koveriq/params.schema.json",
+  "title": "KoverIQ composition review revision",
+  "description": "The only change the review agent may make to a built composition (koveriq.compose.apply_params). Per scene: move the crop focus, shorten an on-screen line (by dropping words only) or scale the scene's text down.",
+  "type": "object",
+  "required": ["scenes"],
+  "additionalProperties": false,
+  "properties": {
+    "scenes": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,31}$" },
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "crop_focus": {
+            "description": "Crop focus as a fraction of the photo (x from left, y from top), for every photo in the scene.",
+            "type": "object",
+            "required": ["x", "y"],
+            "additionalProperties": false,
+            "properties": {
+              "x": { "type": "number", "minimum": 0, "maximum": 1 },
+              "y": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          },
+          "shorten_text": {
+            "description": "Replacement for single-line text slots; each must be shorter and made only of words already in that slot, in order.",
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 4,
+            "propertyNames": { "pattern": "^[A-Za-z]{2,24}$" },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 90,
+              "pattern": "^[^\\s\\u0000-\\u001F\\u007F](?:[^\\u0000-\\u001F\\u007F]*[^\\s\\u0000-\\u001F\\u007F])?$"
+            }
+          },
+          "font_scale": { "type": "number", "minimum": 0.8, "maximum": 1.0 }
+        }
+      }
+    }
+  }
+}

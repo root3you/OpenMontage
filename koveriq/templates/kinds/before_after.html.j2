@@ -1,0 +1,18 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-win { position: absolute; inset: 0; overflow: hidden; z-index: 2; }
+.k-divider { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--surface); box-shadow: 0 0 24px rgba(0,0,0,.35); }
+.k-tag { z-index: 3; }
+#{{ sid }}-blabel { left: {{ F.pad_x }}px; top: {{ F.pad_top }}px; }
+#{{ sid }}-alabel { right: {{ F.pad_x }}px; top: {{ F.pad_top }}px; }
+.k-card { z-index: 4; }
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+{{ k.photo(v.before) }}
+<div class="k-win" id="{{ v.win }}">{{ k.photo(v.after) }}<div class="k-divider" data-layout-ignore></div></div>
+{{ k.text(v.labels.before, sid ~ "-blabel", "k-tag k-item") }}
+{{ k.text(v.labels.after, sid ~ "-alabel", "k-tag k-item") }}
+<div class="k-shade" data-layout-ignore style="z-index:3;height:40%"></div>
+{{ k.card(v.card, sid) }}
+{% endblock %}

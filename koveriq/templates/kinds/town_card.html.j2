@@ -1,0 +1,28 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-townblock { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+.k-boxed { background: var(--surface); border-radius: {{ radius }}px; box-shadow: 0 26px 70px rgba(0,0,0,.28); }
+{{ ".k-boxed { background: var(--accent); --c-over: var(--accent-ink); --c-head: var(--accent-ink); --c-sub: var(--accent-ink); }" if style_name == "bold_offer" else "" }}
+.k-pin { display: block; color: var(--c-over, var(--accent)); }
+{% if F.name == "landscape" %}.k-decor { left: -120px; top: 760px; width: 2160px; height: 420px; }
+{% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1540px; width: 1200px; height: 440px; }
+{% else %}.k-decor { left: -60px; top: 880px; width: 1200px; height: 260px; }{% endif %}
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+{% if v.photo %}
+{{ k.photo(v.photo) }}
+<div class="k-shade" data-layout-ignore></div>
+{% else %}
+<div class="k-fill"></div>
+<div class="k-decor" id="{{ v.decor }}" data-layout-ignore></div>
+{% endif %}
+<div class="k-center">
+<div class="k-townblock{% if v.photo %} k-boxed{% endif %}" id="{{ v.block }}"{% if v.photo %} style="padding:{{ v.pad }}"{% endif %}>
+<svg class="k-pin" id="{{ sid }}-pin" width="56" height="74" viewBox="0 0 48 64" aria-hidden="true"><path fill="currentColor" d="M24 0C10.7 0 0 10.5 0 23.6 0 41.3 24 64 24 64s24-22.7 24-40.4C48 10.5 37.3 0 24 0zm0 33a9.5 9.5 0 1 1 0-19 9.5 9.5 0 0 1 0 19z"/></svg>
+{{ k.text(v.over, sid ~ "-over", "k-over") }}
+{{ k.text(v.town, sid ~ "-town", "k-big", "h2") }}
+{{ k.text(v.sub, sid ~ "-sub", "k-sub", "p") }}
+</div>
+</div>
+{% endblock %}

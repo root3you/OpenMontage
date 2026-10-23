@@ -1,0 +1,4 @@
+# Runtime dependencies of the koveriq package, on top of ../requirements.txt
+# (which already provides pyyaml, jsonschema and Pillow).
+jinja2>=3.1,<4
+markupsafe>=2.1

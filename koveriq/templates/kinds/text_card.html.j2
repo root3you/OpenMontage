@@ -1,0 +1,13 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-tc { left: {{ F.pad_x }}px; top: {{ F.pad_top }}px; width: {{ F.content_w }}px; height: {{ F.safe_h }}px; justify-content: center; }
+{% if F.name == "landscape" %}.k-decor { left: 1500px; top: -60px; width: 520px; height: 1200px; }
+{% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1540px; width: 1200px; height: 440px; }
+{% else %}.k-decor { left: 780px; top: -40px; width: 360px; height: 1160px; }{% endif %}
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+<div class="k-fill" style="background:{{ v.tone.bgc }}"></div>
+<div class="k-decor" id="{{ v.decor }}" data-layout-ignore></div>
+<div class="k-col k-tc" style="--c-over:{{ v.tone.kick }};--c-head:{{ v.tone.fg }};--c-sub:{{ v.tone.fg2 }}">{{ k.text(v.over, sid ~ "-over", "k-over") }}{{ k.text(v.head, sid ~ "-head", "k-head", "h2") }}<div class="k-rule" id="{{ v.rule }}"></div>{{ k.text(v.sub, sid ~ "-sub", "k-sub", "p") }}</div>
+{% endblock %}

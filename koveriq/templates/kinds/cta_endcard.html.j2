@@ -1,0 +1,23 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-ctasteps { display: flex; flex-wrap: nowrap; gap: 34px; }
+.k-ctastep { display: flex; align-items: center; gap: 14px; color: var(--ink); }
+.k-mini { width: 50px; height: 50px; font-size: 26px; }
+.k-lockup { display: flex; align-items: center; }
+.k-lockup img { display: block; width: auto; }
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+<div class="k-fill"></div>
+{% if v.photo %}
+{{ k.photo(v.photo) }}
+{{ k.cover(v.cover, transition) }}
+{% endif %}
+<div class="k-col" style="{{ v.col }};justify-content:{{ 'center' if v.justify == 'center' else 'flex-start' }}">
+{{ k.text(v.over, sid ~ "-over", "k-over") }}
+{{ k.text(v.cta, sid ~ "-cta", "k-head", "h2") }}
+{% if v.steps %}<div class="k-ctasteps">{% for st in v.steps %}<div class="k-ctastep" id="{{ st.id }}"><div class="k-num k-mini">{{ st.n }}</div>{{ k.text(st.label, st.id ~ "-label", "k-item") }}</div>{% endfor %}</div>{% endif %}
+<div class="k-pill" id="{{ sid }}-pill">{{ k.text(v.website, sid ~ "-url", "k-pilltext") }}</div>
+<div class="k-lockup" id="{{ sid }}-brand">{% if v.logo %}<img src="{{ v.logo }}" alt="" style="height:{{ v.logo_h }}px">{% else %}{{ k.text(v.mark, sid ~ "-mark", "k-mark") }}{% endif %}</div>
+</div>
+{% endblock %}

@@ -136,7 +136,7 @@
         "overline": { "$ref": "#/$defs/overline" },
         "headline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 48 }] },
         "subline": { "allOf": [{ "$ref": "#/$defs/line" }, { "maxLength": 90 }] },
-        "tone": { "enum": ["light", "dark", "accent"] }
+        "tone": { "description": "plain: the style background; inverse: ink background; accent: accent background.", "enum": ["plain", "inverse", "accent"] }
       }
     },
     "offer_card": {

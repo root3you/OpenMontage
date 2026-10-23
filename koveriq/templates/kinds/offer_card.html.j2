@@ -1,0 +1,21 @@
+{% extends "scene.html.j2" %}
+{% block css %}
+.k-offerbg { background: {{ "var(--accent)" if style_name == "bold_offer" else "var(--surface)" }}; }
+.k-offer { {{ "--c-over: var(--accent-ink); --c-head: var(--accent-ink); --c-sub: var(--accent-ink);" if style_name == "bold_offer" else "--c-head: var(--accent);" }} }
+.k-tilt { transform: rotate(-4deg); }
+.k-badge { display: block; border-radius: {{ radius }}px; padding: 14px 30px; background: {{ "var(--bg)" if style_name == "bold_offer" else "var(--accent)" }}; color: {{ "var(--ink)" if style_name == "bold_offer" else "var(--accent-ink)" }}; }
+{% if F.name == "landscape" %}.k-decor { left: -120px; top: 860px; width: 2160px; height: 320px; }
+{% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1580px; width: 1200px; height: 400px; }
+{% else %}.k-decor { left: -60px; top: 930px; width: 1200px; height: 220px; }{% endif %}
+{% endblock %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+<div class="k-fill k-offerbg"></div>
+<div class="k-decor" id="{{ v.decor }}" data-layout-ignore></div>
+<div class="k-center k-offer">
+{% if v.badge %}<div class="k-tilt"><div class="k-badge k-item" id="{{ sid }}-badge" style="{{ v.badge.style }}">{{ v.badge.html }}</div></div>{% endif %}
+{{ k.text(v.over, sid ~ "-over", "k-over") }}
+{{ k.text(v.offer, sid ~ "-offer", "k-big", "h2") }}
+{{ k.text(v.terms, sid ~ "-terms", "k-sub", "p") }}
+</div>
+{% endblock %}

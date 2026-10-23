@@ -1,0 +1,11 @@
+{% extends "scene.html.j2" %}
+{% block body %}
+{%- import "_macros.j2" as k -%}
+<div class="k-fill"></div>
+{{ k.photo(v.photo) }}
+{{ k.cover(v.cover, transition) }}
+{% if v.col %}
+<div class="k-col" style="{{ v.col.style }};justify-content:{{ 'center' if v.col.align == 'center' else 'flex-start' }}">{{ k.text(v.col.over, sid ~ "-over", "k-over") }}{{ k.text(v.col.head, sid ~ "-head", "k-head", "h1") }}<div class="k-rule" id="{{ v.col.rule }}"></div>{{ k.text(v.col.sub, sid ~ "-sub", "k-sub", "p") }}</div>
+{% endif %}
+{{ k.card(v.card, sid) }}
+{% endblock %}

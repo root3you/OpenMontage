@@ -1,0 +1,34 @@
+{#- Shared markup helpers. Every value printed here is either escaped by
+    autoescape or built in Python from validated, non-tenant values. -#}
+
+{% macro text(t, id, cls, tag="div") -%}
+{%- if t %}<{{ tag }} class="{{ cls }}" id="{{ id }}" style="{{ t.style }}">{{ t.html }}</{{ tag }}>{% endif -%}
+{%- endmacro %}
+
+{% macro photo(p) -%}
+<div class="k-photo" id="{{ p.id }}" style="{{ p.box }}"><img id="{{ p.img_id }}" src="{{ p.src }}" alt="" style="object-position:{{ p.pos }};transform-origin:{{ p.pos }}"></div>
+{%- endmacro %}
+
+{% macro cover(c, transition) -%}
+{%- if c -%}
+{%- if transition == "louvres" -%}
+<div class="k-cover k-bars" id="{{ c.id }}" style="{{ c.box }}" data-layout-ignore>{% for _ in range(c.bars) %}<div class="k-bar"></div>{% endfor %}</div>
+{%- else -%}
+<div class="k-cover k-blocks" id="{{ c.id }}" style="{{ c.box }}" data-layout-ignore><div class="k-block-a"></div><div class="k-block-b"></div></div>
+{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro transition(id, way, kind, bars) -%}
+{%- if kind == "louvres" -%}
+<div class="k-bars k-bars-{{ way }}" id="{{ id }}" data-layout-ignore>{% for _ in range(bars) %}<div class="k-bar"></div>{% endfor %}</div>
+{%- else -%}
+<div class="k-blocks" id="{{ id }}" data-layout-ignore><div class="k-block-a"></div><div class="k-block-b"></div></div>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro card(c, sid) -%}
+{%- if c -%}
+<div class="k-card" id="{{ c.id }}" style="{{ c.pos }};padding:{{ c.pad }}">{{ text(c.over, sid ~ "-over", "k-over") }}{{ text(c.head, sid ~ "-head", "k-head", "h2") }}{{ text(c.sub, sid ~ "-sub", "k-sub", "p") }}</div>
+{%- endif -%}
+{%- endmacro %}
