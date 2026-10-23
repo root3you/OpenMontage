@@ -17,8 +17,12 @@ from koveriq.tests.fixtures import brand, make_assets, plan_for
 @pytest.fixture()
 def comp(tmp_path):
     plan, script, timings = plan_for(["text_card", "photo_pan", "offer_card", "town_card", "cta_endcard"])
-    plan["scenes"][0]["slots"].update(headline="No cords. No chains.", subline="Up to 15% off all made-to-measure shutters")
-    plan["scenes"][1]["slots"].update(headline="47mm to 89mm louvres in white")
+    plan["scenes"][0]["slots"].update(headline="Child safe, no cords", subline="Free fitting, except the Highlands")
+    plan["scenes"][1]["slots"].update(
+        headline="47mm to 89mm louvres in white",
+        overline="No cords. No chains.",
+        subline="Up to 15% off all made-to-measure shutters",
+    )
     build_composition(plan, script, timings, make_assets(tmp_path), "clean", "16:9", brand(), tmp_path / "comp")
     return tmp_path / "comp"
 
@@ -41,8 +45,8 @@ def test_fact_slots_cannot_be_shortened(comp, scene: str, slot: str, text: str) 
 @pytest.mark.parametrize(
     "slot, text, message",
     [
-        ("headline", "cords. chains.", "negation"),
-        ("subline", "15% off all made-to-measure shutters", "qualifier"),
+        ("headline", "Child safe", "negation"),
+        ("subline", "Free fitting", "qualifier"),
     ],
 )
 def test_negations_and_qualifiers_must_stay(comp, slot: str, text: str, message: str) -> None:
@@ -52,9 +56,9 @@ def test_negations_and_qualifiers_must_stay(comp, slot: str, text: str, message:
 
 def test_figures_stay_all_or_none(comp) -> None:
     with pytest.raises(CompositionError, match="figures"):
-        apply_params(comp, {"scenes": {"sc2": {"shorten_text": {"headline": "47mm louvres"}}}})
-    apply_params(comp, {"scenes": {"sc2": {"shorten_text": {"headline": "louvres in white"}}}})
+        apply_params(comp, {"scenes": {"sc2": {"shorten_text": {"headline": "47mm"}}}})
+    apply_params(comp, {"scenes": {"sc2": {"shorten_text": {"headline": "47mm to 89mm louvres"}}}})
 
 
 def test_meaning_preserving_shortening_is_allowed(comp) -> None:
-    apply_params(comp, {"scenes": {"sc1": {"shorten_text": {"headline": "No cords.", "subline": "Up to 15% off all shutters"}}}})
+    apply_params(comp, {"scenes": {"sc2": {"shorten_text": {"overline": "No cords.", "subline": "Up to 15% off"}}}})

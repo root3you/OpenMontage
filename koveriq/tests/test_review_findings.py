@@ -204,3 +204,92 @@ def test_ids_differing_only_by_case_are_rejected(tmp_path) -> None:
     args["scene_plan"]["scenes"][2]["slots"] = {"assetId": "A-1"}
     with pytest.raises(CompositionError, match="case"):
         build_composition(**args)
+
+
+# second review pass
+
+
+def test_shorten_text_only_cuts_words_off_the_end(tmp_path) -> None:
+    """Dropping a middle word can flip a claim ("Free survey, fitting extra"
+    -> "Free fitting"); cutting the end of the line cannot add one."""
+    args = _args(tmp_path)
+    args["scene_plan"]["scenes"][2]["slots"]["headline"] = "Free survey, fitting extra"
+    build_composition(**args)
+    with pytest.raises(CompositionError, match="only drop"):
+        apply_params(args["out_dir"], {"scenes": {"sc3": {"shorten_text": {"headline": "Free fitting"}}}})
+    apply_params(args["out_dir"], {"scenes": {"sc3": {"shorten_text": {"headline": "Free survey"}}}})
+
+
+def test_decompression_bomb_is_an_unreadable_image(tmp_path) -> None:
+    import struct
+    import zlib
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    bomb = tmp_path / "bomb.png"
+    header = struct.pack(">IIBBBBB", 30000, 30000, 8, 2, 0, 0, 0)
+    bomb.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(b"\x00")) + chunk(b"IEND", b""))
+    args = _args(tmp_path)
+    args["assets"]["a-1"] = bomb
+    with pytest.raises(CompositionError, match="a-1"):
+        build_composition(**args)
+
+
+def test_dict_scene_id_is_a_composition_error(tmp_path) -> None:
+    args = _args(tmp_path)
+    args["scene_plan"]["scenes"][0]["id"] = {"x": 1}
+    with pytest.raises(CompositionError):
+        build_composition(**args)
+
+
+def test_scene_ids_cannot_collide_with_element_ids(tmp_path) -> None:
+    """Element ids are <sceneId>-<name>, so a scene id may not contain '-'."""
+    args = _args(tmp_path)
+    args["scene_plan"]["scenes"][0]["id"] = "hero"
+    args["timings"]["hero"] = args["timings"].pop("sc1")
+    args["scene_plan"]["scenes"][1]["id"] = "hero-card"
+    args["timings"]["hero-card"] = args["timings"].pop("sc2")
+    with pytest.raises(CompositionError, match="hero-card"):
+        build_composition(**args)
+
+
+def test_malformed_stored_extensions_do_not_crash(tmp_path) -> None:
+    args = _args(tmp_path)
+    scene = args["scene_plan"]["scenes"][0]
+    scene.pop("kind")
+    scene.pop("slots")
+    args["scene_plan"]["metadata"] = {"koveriq": {"scenes": {"sc1": ["kind", "slots"]}}}
+    with pytest.raises(CompositionError):
+        build_composition(**args)
+
+
+@pytest.mark.parametrize(
+    "kinds_, hidden",
+    [
+        (("cta_endcard",), None),
+        (("photo_pan", "cta_endcard", "text_card"), (5.0, 10.0)),
+    ],
+)
+def test_corner_mark_is_hidden_on_end_cards(tmp_path, kinds_, hidden) -> None:
+    args = _args(tmp_path, kinds_)
+    result = build_composition(**args)
+    index = result.index_html.read_text(encoding="utf-8")
+    if hidden is None:
+        assert 'id="brand"' not in index
+        return
+    bug = (args["out_dir"] / "compositions" / "brand.html").read_text(encoding="utf-8")
+    start, end = hidden
+    assert re.search(rf'tl\.to\("#brand-bug", \{{ opacity: 0[^\n]*\}}, {start - 0.35:g}\);', bug)
+    assert re.search(rf'tl\.to\("#brand-bug", \{{ opacity: 1[^\n]*\}}, {end + 0.3:g}\);', bug)
+
+
+def test_extra_non_json_content_is_not_saved(tmp_path) -> None:
+    args = _args(tmp_path)
+    args["timings"]["sc1"]["debug"] = {1, 2}
+    args["scene_plan"]["scenes"][0]["required_assets"] = [{"type": "photo", "description": "x", "source": "provided", "obj": object()}]
+    result = build_composition(**args)
+    saved = json.loads((args["out_dir"] / ".koveriq" / "build.json").read_text(encoding="utf-8"))
+    assert "debug" not in saved["timings"]["sc1"]
+    assert set(saved["scene_plan"]["scenes"][0]) <= {"id", "kind", "slots", "role"}
+    assert result.duration_ms == 20000

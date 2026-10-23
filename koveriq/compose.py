@@ -65,7 +65,7 @@ NARRATION_KEY = "@narration"
 MIN_SCENE_MS = 1500
 STATE_FILE = pathlib.Path(".koveriq") / "build.json"
 
-_SCENE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,31}$")
+_SCENE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 _RESERVED_IDS = {"main", "root", "brand", "narration"}
 _IMAGE_EXT = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
 _AUDIO_EXT = {".wav", ".mp3", ".m4a", ".aac"}
@@ -165,7 +165,7 @@ def _image_info(path: pathlib.Path) -> Optional[tuple[str, int, int]]:
             if image.format not in _IMAGE_EXT:
                 return None
             return image.format, image.width, image.height
-    except (OSError, UnidentifiedImageError, ValueError):
+    except Exception:  # noqa: BLE001 - Pillow raises DecompressionBombError, SyntaxError, struct.error...
         return None
 
 
@@ -303,11 +303,21 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
         hosts.append({"id": sid, "start": num(timing["startMs"] / 1000), "duration": num(duration), "track": 1})
 
     total_ms = timings[scenes[-1]["id"]]["endMs"]
-    last = scenes[-1]
-    brand_end_ms = timings[last["id"]]["startMs"] if last["kind"] == "cta_endcard" and len(scenes) > 1 else total_ms
-    if brand_end_ms >= 1500:
-        hosts.append({"id": "brand", "start": "0", "duration": num(brand_end_ms / 1000), "track": 2})
-        files["compositions/brand.html"] = _brand_bug(env, style, frame, palette, resources.brand, brand_end_ms / 1000, warnings)
+    # The corner mark shows outside end cards (which carry the full lock-up).
+    windows: list[list[float]] = []
+    for scene in scenes:
+        if scene["kind"] == "cta_endcard":
+            continue
+        span = [timings[scene["id"]]["startMs"] / 1000, timings[scene["id"]]["endMs"] / 1000]
+        if windows and abs(windows[-1][1] - span[0]) < 1e-9:
+            windows[-1][1] = span[1]
+        else:
+            windows.append(span)
+    windows = [w for w in windows if w[1] - w[0] >= 1.5]
+    if windows:
+        brand_end = windows[-1][1]
+        hosts.append({"id": "brand", "start": "0", "duration": num(brand_end), "track": 2})
+        files["compositions/brand.html"] = _brand_bug(env, style, frame, palette, resources.brand, windows, warnings)
 
     title = (state.get("title") or brand["companyName"]).strip() or "KoverIQ video"
     index_html = env.get_template("root.html.j2").render(
@@ -330,7 +340,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     return warnings
 
 
-def _brand_bug(env: Environment, style, frame, palette, brand: BrandView, end_s: float, warnings: list[str]) -> str:
+def _brand_bug(env: Environment, style, frame, palette, brand: BrandView, windows: list[list[float]], warnings: list[str]) -> str:
     mark_role = style.roles["mark"]
     place = {"landscape": (56, 44), "portrait": (64, 150), "square": (48, 40)}[frame.name]
     mark = None
@@ -365,7 +375,17 @@ def _brand_bug(env: Environment, style, frame, palette, brand: BrandView, end_s:
         logo=brand.logo_src,
         logo_h=40,
         mark=mark,
-        fade_out=num(max(0.9, end_s - 0.35)),
+        show_at=num(windows[0][0] + 0.3),
+        # Hide the mark around each end card between visible windows.
+        toggles=[
+            item
+            for prev, nxt in zip(windows, windows[1:])
+            for item in (
+                {"opacity": 0, "duration": "0.3", "at": num(prev[1] - 0.35)},
+                {"opacity": 1, "duration": "0.4", "at": num(nxt[0] + 0.3)},
+            )
+        ],
+        fade_out=num(max(windows[-1][0] + 0.9, windows[-1][1] - 0.35)),
     )
 
 
@@ -486,8 +506,15 @@ def build_composition(
         "style": style,
         "fmt": fmt,
         "title": script.get("title") if isinstance(script, Mapping) and isinstance(script.get("title"), str) else "",
-        "scene_plan": {"scenes": scenes},
-        "timings": {s["id"]: dict(timings[s["id"]]) for s in scenes},
+        "scene_plan": {"scenes": [{k: s[k] for k in ("id", "kind", "slots", "role") if k in s} for s in scenes]},
+        "timings": {
+            s["id"]: {
+                "startMs": timings[s["id"]]["startMs"],
+                "endMs": timings[s["id"]]["endMs"],
+                "words": [{"w": w["w"], "startMs": w["startMs"], "endMs": w["endMs"]} for w in timings[s["id"]].get("words") or []],
+            }
+            for s in scenes
+        },
         "photos": photos,
         "brand": brand_state,
         "narration": narration_rel,
@@ -534,25 +561,21 @@ _TRAILING_PUNCTUATION = ",;:.!?\u2026"
 
 
 def _drops_whole_words(shorter: str, current: str) -> bool:
-    """True when `shorter` is `current` with whole words removed.
+    """True when `shorter` is `current` with whole words cut off its end.
 
-    Words are compared exactly (case, punctuation, symbols). Only the last
-    kept word may lose the sentence punctuation that followed it.
+    Words are compared exactly (case, punctuation, symbols). Dropping a word
+    from the middle can flip a claim ("Free survey, fitting extra" -> "Free
+    fitting"), so only a leading run of words may be kept; the last kept word
+    may lose the sentence punctuation that followed it.
     """
     new, old = shorter.split(), current.split()
-    if not new:
+    if not new or len(new) > len(old):
         return False
-    position = 0
-    for index, word in enumerate(new):
-        last = index == len(new) - 1
-        while position < len(old):
-            candidate = old[position]
-            position += 1
-            if word == candidate or (last and word == candidate.rstrip(_TRAILING_PUNCTUATION) and word):
-                break
-        else:
-            return False
-    return True
+    *head, last = new
+    if head != old[: len(head)]:
+        return False
+    candidate = old[len(head)]
+    return last == candidate or last == candidate.rstrip(_TRAILING_PUNCTUATION)
 
 
 def _non_finite(value: Any, path: str) -> list[str]:
@@ -597,7 +620,7 @@ def params_errors(state: dict[str, Any], params: Any) -> list[str]:
                 errors.append(f"{where}: must be shorter than the current {len(current)} characters")
             old_words, new_words = _words(current), _words(text)
             if not _drops_whole_words(text, current):
-                errors.append(f"{where}: may only drop whole words from {current!r}, not add or change them")
+                errors.append(f"{where}: may only drop whole words from the end of {current!r}, not add or change them")
                 continue
             kept = set(new_words)
             for group, label in ((NEGATIONS, "negation"), (QUALIFIERS, "qualifier")):

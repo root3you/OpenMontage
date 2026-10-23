@@ -13,9 +13,9 @@
       "type": "object",
       "minProperties": 1,
       "propertyNames": {
-        "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,31}$",
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$",
         "not": {
-          "pattern": "[^A-Za-z0-9_-]"
+          "pattern": "[^A-Za-z0-9_]"
         }
       },
       "additionalProperties": {
@@ -45,7 +45,7 @@
             }
           },
           "shorten_text": {
-            "description": "Replacement for single-line text slots (not cta, offer, terms, badge or town). Each must be shorter, made only of words already in that slot in order, keep every negation and qualifier, and keep all of its figures or none.",
+            "description": "Replacement for single-line text slots (not cta, offer, terms, badge or town): the same line with whole words cut off its end. It must keep every negation and qualifier, and all of its figures or none.",
             "type": "object",
             "minProperties": 1,
             "maxProperties": 4,

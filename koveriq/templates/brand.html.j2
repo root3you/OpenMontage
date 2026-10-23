@@ -11,7 +11,10 @@
 <script>
 (function () {
   var tl = gsap.timeline({ paused: true });
-  tl.fromTo("#brand-bug", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 0.3);
+  tl.fromTo("#brand-bug", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, {{ show_at }});
+{% for t in toggles %}
+  tl.to("#brand-bug", { opacity: {{ t.opacity }}, duration: {{ t.duration }}, ease: "power1.inOut" }, {{ t.at }});
+{% endfor %}
   tl.to("#brand-bug", { opacity: 0, duration: 0.3, ease: "power1.in" }, {{ fade_out }});
   window.__timelines["brand"] = tl;
 })();

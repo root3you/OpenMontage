@@ -136,7 +136,9 @@ def from_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
     stored = _stored_extensions(plan)
     for scene in _scene_dicts(plan):
         sid = scene.get("id")
-        extra = (stored.get(sid) if isinstance(sid, str) else None) or {}
+        extra = stored.get(sid) if isinstance(sid, str) else None
+        if not isinstance(extra, dict):
+            extra = {}
         for key in EXTENSION_KEYS:
             if key not in scene and key in extra:
                 scene[key] = extra[key]

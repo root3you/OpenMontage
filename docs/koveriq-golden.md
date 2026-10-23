@@ -12,19 +12,17 @@ ffmpeg 8.1.2, Python 3.11.15 (uv), `hyperframes@0.8.185` and its Chrome for
 Testing (`chrome-headless-shell` 152.0.7977.30) already cached, render quality
 `standard`, 30 fps.
 
-| Step | Run 1 | Run 2 | Run 3 (final) |
-|---|---|---|---|
-| build (`build_composition`) | 0.07 s | 0.21 s | 0.06 s |
-| `hyperframes lint` | 1.05 s, 0 errors, 0 warnings | 1.31 s, 0 errors, 0 warnings | 0.84 s, 0 errors, 0 warnings |
-| `hyperframes snapshot` ×3 | 6.90 s | 12.95 s | 6.63 s |
-| `hyperframes render` | 50.55 s | 56.85 s | 40.59 s |
-| **Total wall time** (`time make golden`) | **59.8 s** | **73.4 s** | **50.3 s** |
+| Run | Code | build | `lint` | `snapshot` ×3 | `render` | **Total wall** (`time make golden`) |
+|---|---|---|---|---|---|---|
+| 1 | before the 28 px text-floor fix | 0.07 s | 1.05 s, 0 errors, 0 warnings | 6.90 s | 50.55 s | **59.8 s** |
+| 2 | after the text-floor fix | 0.21 s | 1.31 s, 0 errors, 0 warnings | 12.95 s | 56.85 s | **73.4 s** |
+| 3 | after the first review fixes | 0.06 s | 0.84 s, 0 errors, 0 warnings | 6.63 s | 40.59 s | **50.3 s** |
+| 4 | final (after the second review pass) | 0.08 s | 0.75 s, 0 errors, 0 warnings | 19.86 s | 41.32 s | **63.0 s** |
 
-Run 3 is the final code (after the review fixes, commit on `origin/koveriq`);
-runs 1 and 2 were earlier template revisions with the same inputs. The spread
-is mostly machine load.
+All runs used the same inputs. The spread, mostly in the snapshot step, is
+machine load.
 
-Output of run 3 (runs 1 and 2 measured the same duration, size and loudness):
+Output of the final run (every run measured the same duration, size and loudness):
 
 | Check | Expected | Measured | Result |
 |---|---|---|---|

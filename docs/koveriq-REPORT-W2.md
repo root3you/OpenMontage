@@ -58,13 +58,13 @@ was renamed or restructured.
 
 ## Tests
 
-- `koveriq/tests`: **244 passed**, plus 12 opt-in tests (the `hyperframes lint`
+- `koveriq/tests`: **252 passed**, plus 12 opt-in tests (the `hyperframes lint`
   sweep) that also pass when run with `KOVERIQ_HF_LINT=1` (12/12).
   - They run with no browser and no network. If GSAP was never fetched, a
     clearly fake stand-in is used.
-  - **Coverage of the `koveriq` package is 99%** (1483 statements, 13 missed,
+  - **Coverage of the `koveriq` package is 99%** (1488 statements, 12 missed,
     tests excluded; pytest-cov).
-- Full fork suite (`tests/` + `koveriq/tests`): **2305 passed**, 21 skipped,
+- Full fork suite (`tests/` + `koveriq/tests`): **2313 passed**, 21 skipped,
   3 xfailed and **1 failed**.
   - The failure is `tests/tools/test_bmts_lite.py`, which needs a `python`
     executable on PATH. It also fails on an untouched checkout and is not
@@ -76,13 +76,14 @@ was renamed or restructured.
 
 ## Golden (`make golden`)
 
-| | Run 1 | Run 2 | Run 3 (final code) |
-|---|---|---|---|
-| `hyperframes lint` | 0 errors, 0 warnings | 0 errors, 0 warnings | 0 errors, 0 warnings |
-| `hyperframes snapshot` (3 frames) | 6.9 s | 13.0 s | 6.6 s |
-| `hyperframes render` | 50.6 s | 56.9 s | 40.6 s |
-| **Total wall time** | **59.8 s** | **73.4 s** | **50.3 s** |
-| MP4 | 38.500 s, 1920×1080, 30 fps, H.264 + AAC | same | same |
+| Run | `hyperframes lint` | `snapshot` ×3 | `render` | **Total wall time** |
+|---|---|---|---|---|
+| 1 | 0 errors, 0 warnings | 6.9 s | 50.6 s | **59.8 s** |
+| 2 | 0 errors, 0 warnings | 13.0 s | 56.9 s | **73.4 s** |
+| 3 | 0 errors, 0 warnings | 6.6 s | 40.6 s | **50.3 s** |
+| 4 (final code) | 0 errors, 0 warnings | 19.9 s | 41.3 s | **63.0 s** |
+
+Every run produced an MP4 of 38.500 s at 1920×1080, 30 fps, H.264 + AAC.
 
 - Both ffprobe assertions pass: duration within ±0.1 s, resolution
   1920×1080.
@@ -128,6 +129,19 @@ A separate reviewer read the builder, the schemas and all the templates.
      fixed.
   9. Scene or asset ids that differ only by case collided on macOS and
      Windows file systems. They are now refused.
+- A second review pass found six more, all fixed with regression tests:
+  - `shorten_text` could still change a claim by dropping a middle word
+    ("Free survey, fitting extra" → "Free fitting"). It now only cuts words
+    off the end.
+  - A decompression-bomb image escaped as a Pillow error; it is now an
+    unreadable image.
+  - A scene id could equal another scene's element id (`hero` and
+    `hero-card`); scene ids may no longer contain `-`.
+  - A list stored in `metadata.koveriq.scenes` crashed the build.
+  - The corner mark doubled up on end cards; it is now hidden during every
+    end card.
+  - Extra non-JSON keys crashed `build.json`; only the keys the renderer
+    uses are saved.
 - Separately, I tightened `shorten_text` so that it cannot change a claim:
   see the `apply_params` rules below.
 
@@ -162,8 +176,9 @@ optional `role`:
 }
 ```
 
-- `id` must match `^[A-Za-z][A-Za-z0-9_-]{0,31}$` and must not be one of
-  `main`, `root`, `brand` or `narration`.
+- `id` must match `^[A-Za-z][A-Za-z0-9_]{0,31}$` and must not be one of
+  `main`, `root`, `brand` or `narration`. There is no `-`, because element
+  ids are `<sceneId>-<name>`. Ids that differ only by case are refused.
 - Use `koveriq.scenes.KIND_TO_TYPE[kind]` for `type`.
 - `kind` and `slots` must validate against `koveriq/scene_kinds.schema.json`.
   `koveriq.scenes.slot_errors` and `scene_plan_errors` return the errors as a
@@ -228,8 +243,8 @@ the pinned CLI in offline mode.
                     "font_scale": 0.9}}}
 ```
 
-- `shorten_text` must be shorter than the current text and may only use
-  words already in that slot, in the same order.
+- `shorten_text` must be the current line with whole words cut off its end.
+  Only the last kept word may lose its trailing punctuation.
   - It must keep every negation ("no", "not", "without") and qualifier
     ("up", "from", "only").
   - It must keep all of the slot's figures or none of them.
