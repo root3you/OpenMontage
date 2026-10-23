@@ -57,10 +57,10 @@ def test_default_location_follows_xdg_cache_home(tmp_path, monkeypatch) -> None:
 
 
 def test_build_refuses_without_gsap(tmp_path, monkeypatch) -> None:
-    from koveriq.compose import CompositionError, build_composition
+    from koveriq.compose import build_composition
     from koveriq.tests.fixtures import brand, make_assets, plan_for
 
     monkeypatch.setenv("KOVERIQ_GSAP_JS", str(tmp_path / "missing.js"))
     plan, script, timings = plan_for(["text_card", "cta_endcard"])
-    with pytest.raises(CompositionError, match="gsap"):
+    with pytest.raises(vendor.GsapUnavailable, match="gsap"):
         build_composition(plan, script, timings, make_assets(tmp_path), "clean", "16:9", brand(), tmp_path / "c")

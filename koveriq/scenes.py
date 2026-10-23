@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -103,6 +104,10 @@ def slot_errors(scene: dict[str, Any], *, prefix: str = "") -> list[str]:
         return errors
     slots = scene["slots"]
     where = f"{prefix}.slots" if prefix else "slots"
+    for key in ("focus", "beforeFocus", "afterFocus"):
+        point = slots.get(key)
+        if isinstance(point, dict) and not all(math.isfinite(point[axis]) for axis in ("x", "y")):
+            errors.append(f"{where}.{key}: x and y must be finite numbers")
     if scene["kind"] == "swatches" and "highlight" in slots:
         if slots["highlight"] >= len(slots["swatches"]):
             errors.append(f"{where}.highlight: {slots['highlight']} does not index one of the swatches")
@@ -115,9 +120,10 @@ def slot_errors(scene: dict[str, Any], *, prefix: str = "") -> list[str]:
 
 def scene_asset_ids(scene: dict[str, Any]) -> list[str]:
     """Asset ids a scene's slots reference, in slot order."""
-    slots = scene.get("slots") or {}
-    ids = [slots[k] for k in ("assetId", "beforeAssetId", "afterAssetId") if slots.get(k)]
-    return ids
+    slots = scene.get("slots")
+    if not isinstance(slots, dict):
+        return []
+    return [slots[k] for k in ("assetId", "beforeAssetId", "afterAssetId") if isinstance(slots.get(k), str) and slots[k]]
 
 
 def from_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
@@ -129,7 +135,8 @@ def from_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
     plan = copy.deepcopy(plan)
     stored = _stored_extensions(plan)
     for scene in _scene_dicts(plan):
-        extra = stored.get(scene.get("id")) or {}
+        sid = scene.get("id")
+        extra = (stored.get(sid) if isinstance(sid, str) else None) or {}
         for key in EXTENSION_KEYS:
             if key not in scene and key in extra:
                 scene[key] = extra[key]
@@ -145,8 +152,8 @@ def to_checkpoint_scene_plan(plan: dict[str, Any]) -> dict[str, Any]:
     stored: dict[str, Any] = {}
     for scene in _scene_dicts(plan):
         extra = {key: scene.pop(key) for key in EXTENSION_KEYS if key in scene}
-        if extra:
-            stored[scene.get("id")] = extra
+        if extra and isinstance(scene.get("id"), str):
+            stored[scene["id"]] = extra
     metadata = plan.get("metadata")
     if not isinstance(metadata, dict):
         metadata = plan["metadata"] = {}
@@ -179,10 +186,8 @@ def scene_plan_errors(plan: dict[str, Any]) -> list[str]:
     for error in upstream.iter_errors(to_checkpoint_scene_plan(inline)):
         errors.append(_format_error("scene_plan", error))
     seen: set[str] = set()
-    for index, scene in enumerate(inline.get("scenes") or []):
-        if not isinstance(scene, dict):
-            continue
-        sid = scene.get("id") or f"scenes[{index}]"
+    for index, scene in enumerate(_scene_dicts(inline)):
+        sid = scene.get("id") if isinstance(scene.get("id"), str) else f"scenes[{index}]"
         if sid in seen:
             errors.append(f"{sid}: duplicate scene id")
         seen.add(sid)

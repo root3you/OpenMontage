@@ -80,7 +80,7 @@ def test_same_params_twice_is_idempotent(comp) -> None:
         ({"scenes": {"sc3": {"crop_focus": {"x": 0.5, "y": 0.5}}}}, "shows no photo"),
         ({"scenes": {"sc2": {"crop_focus": {"x": 2, "y": 0.5}}}}, "crop_focus"),
         ({"scenes": {"sc3": {"shorten_text": {"headline": "No cords. No chains. Ever."}}}}, "shorter"),
-        ({"scenes": {"sc3": {"shorten_text": {"headline": "15% off"}}}}, "only drop words"),
+        ({"scenes": {"sc3": {"shorten_text": {"headline": "15% off"}}}}, "only drop whole words"),
         ({"scenes": {"sc3": {"shorten_text": {"title": "x"}}}}, "no text slot"),
         ({"scenes": {"sc3": {"recolour": "#FF0000"}}}, "Additional properties"),
         ({"scenes": {"sc3": {}}}, "params"),

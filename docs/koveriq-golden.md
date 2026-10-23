@@ -12,19 +12,19 @@ ffmpeg 8.1.2, Python 3.11.15 (uv), `hyperframes@0.8.185` and its Chrome for
 Testing (`chrome-headless-shell` 152.0.7977.30) already cached, render quality
 `standard`, 30 fps.
 
-| Step | Run 1 | Run 2 |
-|---|---|---|
-| build (`build_composition`) | 0.07 s | 0.21 s |
-| `hyperframes lint` | 1.05 s, 0 errors, 0 warnings | 1.31 s, 0 errors, 0 warnings |
-| `hyperframes snapshot` ×3 | 6.90 s | 12.95 s |
-| `hyperframes render` | 50.55 s | 56.85 s |
-| **Total wall time** (`time make golden`) | **59.8 s** | **73.4 s** |
+| Step | Run 1 | Run 2 | Run 3 (final) |
+|---|---|---|---|
+| build (`build_composition`) | 0.07 s | 0.21 s | 0.06 s |
+| `hyperframes lint` | 1.05 s, 0 errors, 0 warnings | 1.31 s, 0 errors, 0 warnings | 0.84 s, 0 errors, 0 warnings |
+| `hyperframes snapshot` ×3 | 6.90 s | 12.95 s | 6.63 s |
+| `hyperframes render` | 50.55 s | 56.85 s | 40.59 s |
+| **Total wall time** (`time make golden`) | **59.8 s** | **73.4 s** | **50.3 s** |
 
-Run 2 is the final template set (after the 28 px text-floor fix); run 1 was
-made just before that fix, with the same scene plan. The spread is machine
-load.
+Run 3 is the final code (after the review fixes, commit on `origin/koveriq`);
+runs 1 and 2 were earlier template revisions with the same inputs. The spread
+is mostly machine load.
 
-Output of run 2:
+Output of run 3 (runs 1 and 2 measured the same duration, size and loudness):
 
 | Check | Expected | Measured | Result |
 |---|---|---|---|
@@ -35,7 +35,7 @@ Output of run 2:
 | File size | — | 10.4 MB | — |
 | Integrated loudness | −16 ±1 LUFS after the worker's packaging (spec §13.5) | −13.1 LUFS before packaging | not normalised here |
 
-Render speed: 38.5 s of video in about 51–57 s, i.e. **1.3–1.5× real time**
+Render speed: 38.5 s of video in about 41–57 s, i.e. **1.05–1.5× real time**
 (the spike measured 1.8× warm at `quality=high`).
 
 `hyperframes check --samples 15` on the same composition (browser audits, not

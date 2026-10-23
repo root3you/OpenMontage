@@ -132,7 +132,7 @@ def _focus(ctx: SceneContext, key: str = "focus") -> tuple[float, float]:
     return float(focus.get("x", 0.5)), float(focus.get("y", 0.5))
 
 
-def _photo(ctx: SceneContext, res: Resources, asset_id: str, name: str, box: tuple[int, int, int, int], focus_key: str = "focus", slot: str = "assetId") -> dict[str, Any]:
+def _photo(ctx: SceneContext, res: Resources, asset_id: str, name: str, box: tuple[int, int, int, int], focus_key: str = "focus", slot: str = "assetId", *, centred: bool = False) -> dict[str, Any]:
     left, top, w, h = box
     info = res.photos[asset_id]
     fx, fy = _focus(ctx, focus_key)
@@ -146,6 +146,9 @@ def _photo(ctx: SceneContext, res: Resources, asset_id: str, name: str, box: tup
         "img_id": f"{ctx.sid}-{name}-img",
         "src": info.src,
         "pos": f"{num(fx * 100)}% {num(fy * 100)}%",
+        # A push scales around the focus; a sideways pan must scale around the
+        # centre or its shift exposes the background when the focus is off-centre.
+        "origin": "50% 50%" if centred else f"{num(fx * 100)}% {num(fy * 100)}%",
         "box": f"left:{left}px;top:{top}px;width:{w}px;height:{h}px",
     }
 
@@ -154,10 +157,20 @@ def _t0(flags: dict[str, bool]) -> float:
     return 0.5 if flags["tin"] else 0.2
 
 
+# The out-transition starts 0.6 s before the scene ends (0.52 s in bold_offer)
+# and the longest entrance lasts 0.8 s, so no entrance may start later than this.
+LAST_ENTRANCE = 0.62 + 0.8
+LAST_ITEM = 0.62 + 0.55
+
+
 def _compress(ctx: SceneContext, t: float) -> float:
-    """Squeeze entrance times into short scenes, keeping a 0.9 s hold."""
-    room = ctx.duration - 0.9
-    return min(t, max(0.1, room))
+    """Squeeze entrance times into short scenes so every entrance has
+    finished before the out-transition starts."""
+    return min(t, max(0.1, ctx.duration - LAST_ENTRANCE))
+
+
+def _latest_item(ctx: SceneContext) -> float:
+    return max(0.1, ctx.duration - LAST_ITEM)
 
 
 def _card_texts(ctx: SceneContext, box_w: float, *, head_slot: str = "headline", head_size: str = "head", head_lines: int = 2, sub_lines: int = 2) -> dict[str, Optional[Text]]:
@@ -198,8 +211,9 @@ def _card_view(ctx: SceneContext, texts: dict[str, Optional[Text]], m: Motion, t
 
 def photo_pan(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, bool]) -> dict[str, Any]:
     F, s = ctx.frame, ctx.slots
-    photo = _photo(ctx, res, s["assetId"], "photo", (0, 0, F.w, F.h))
-    m.photo(photo["img_id"], ctx.duration, s.get("direction", "in"))
+    direction = s.get("direction", "in")
+    photo = _photo(ctx, res, s["assetId"], "photo", (0, 0, F.w, F.h), centred=direction in ("left", "right"))
+    m.photo(photo["img_id"], ctx.duration, direction)
     card = _card_view(ctx, _card_texts(ctx, _card_text_w(ctx)), m, _t0(flags) + 0.2)
     return {"photo": photo, "card": card}
 
@@ -297,7 +311,7 @@ def option_chips(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, 
     t = _t0(flags) + 0.15
     if title:
         m.text(f"{ctx.sid}-title", _compress(ctx, t))
-    times = item_beats(s["chips"], ctx.words, earliest=_compress(ctx, t + 0.45), latest=max(0.6, ctx.duration - 1.0))
+    times = item_beats(s["chips"], ctx.words, earliest=_compress(ctx, t + 0.45), latest=_latest_item(ctx))
     chip_ids = [f"{ctx.sid}-chip{i + 1}" for i in range(len(s["chips"]))]
     for el_id, at in zip(chip_ids, times):
         m.item(el_id, at)
@@ -341,7 +355,7 @@ def swatches(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, bool
     if title:
         m.text(f"{ctx.sid}-title", _compress(ctx, t))
     ids = [f"{ctx.sid}-sw{i + 1}" for i in range(n)]
-    times = item_beats([sw["label"] for sw in items], ctx.words, earliest=_compress(ctx, t + 0.4), latest=max(0.6, ctx.duration - 1.3))
+    times = item_beats([sw["label"] for sw in items], ctx.words, earliest=_compress(ctx, t + 0.4), latest=_latest_item(ctx))
     for el_id, at in zip(ids, times):
         m.item(el_id, at)
     ring = None
@@ -437,7 +451,7 @@ def steps(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, bool]) 
     if title:
         m.text(f"{ctx.sid}-title", _compress(ctx, t))
     ids = [f"{ctx.sid}-step{i + 1}" for i in range(n)]
-    times = item_beats(items, ctx.words, earliest=_compress(ctx, t + 0.45), latest=max(0.6, ctx.duration - 1.0))
+    times = item_beats(items, ctx.words, earliest=_compress(ctx, t + 0.45), latest=_latest_item(ctx))
     for el_id, at in zip(ids, times):
         m.item(el_id, at)
     decor_id = f"{ctx.sid}-decor"

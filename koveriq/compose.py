@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import pathlib
 import re
 import shutil
@@ -103,6 +104,9 @@ def _timing_errors(scenes: list[dict[str, Any]], timings: Any) -> tuple[list[str
     previous_end: Optional[int] = None
     for index, scene in enumerate(scenes):
         sid = scene.get("id")
+        if not isinstance(sid, str):
+            previous_end = None
+            continue
         timing = timings.get(sid)
         if not isinstance(timing, Mapping):
             errors.append(f"{sid}: no timings for this scene")
@@ -138,7 +142,7 @@ def _brand_errors(brand: Any) -> list[str]:
     errors = []
     for key, limit in (("companyName", 60), ("website", 80)):
         value = brand.get(key)
-        if not isinstance(value, str) or not _LINE.match(value) or len(value) > limit:
+        if not isinstance(value, str) or not _LINE.fullmatch(value) or len(value) > limit:
             errors.append(f"brand.{key}: required, one trimmed line of at most {limit} characters")
     if isinstance(brand.get("website"), str) and re.search(r"\s", brand["website"]):
         errors.append("brand.website: must not contain spaces")
@@ -251,11 +255,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
         )
     )
 
-    comps = out_dir / "compositions"
-    if comps.exists():
-        shutil.rmtree(comps)
-    comps.mkdir(parents=True)
-
+    files: dict[str, str] = {}
     scenes = state["scene_plan"]["scenes"]
     timings = state["timings"]
     params = state["params"]["scenes"]
@@ -298,7 +298,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
             bars=BARS,
             tweens=[Markup(line) for line in tweens.lines],
         )
-        (comps / f"{sid}.html").write_text(html, encoding="utf-8")
+        files[f"compositions/{sid}.html"] = html
         warnings.extend(ctx.warnings)
         hosts.append({"id": sid, "start": num(timing["startMs"] / 1000), "duration": num(duration), "track": 1})
 
@@ -307,7 +307,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     brand_end_ms = timings[last["id"]]["startMs"] if last["kind"] == "cta_endcard" and len(scenes) > 1 else total_ms
     if brand_end_ms >= 1500:
         hosts.append({"id": "brand", "start": "0", "duration": num(brand_end_ms / 1000), "track": 2})
-        (comps / "brand.html").write_text(_brand_bug(env, style, frame, palette, resources.brand, brand_end_ms / 1000, warnings), encoding="utf-8")
+        files["compositions/brand.html"] = _brand_bug(env, style, frame, palette, resources.brand, brand_end_ms / 1000, warnings)
 
     title = (state.get("title") or brand["companyName"]).strip() or "KoverIQ video"
     index_html = env.get_template("root.html.j2").render(
@@ -318,7 +318,15 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
         hosts=hosts,
         narration=state.get("narration"),
     )
-    (out_dir / "index.html").write_text(index_html, encoding="utf-8")
+    files["index.html"] = index_html
+
+    # Everything rendered: only now replace the previous composition.
+    comps = out_dir / "compositions"
+    if comps.exists():
+        shutil.rmtree(comps)
+    comps.mkdir(parents=True)
+    for rel, content in files.items():
+        (out_dir / rel).write_text(content, encoding="utf-8")
     return warnings
 
 
@@ -383,11 +391,17 @@ def build_composition(
         errors.append(f"fmt: {fmt!r} is not one of {list(FORMATS)}")
     plan = from_checkpoint_scene_plan(scene_plan if isinstance(scene_plan, dict) else {})
     errors.extend(scene_plan_errors(plan))
-    scenes = [s for s in plan.get("scenes") or [] if isinstance(s, dict)]
+    raw_scenes = plan.get("scenes")
+    scenes = [s for s in raw_scenes if isinstance(s, dict)] if isinstance(raw_scenes, list) else []
+    folded: dict[str, str] = {}
     for scene in scenes:
         sid = scene.get("id")
-        if not isinstance(sid, str) or not _SCENE_ID.match(sid) or sid in _RESERVED_IDS:
+        if not isinstance(sid, str) or not _SCENE_ID.fullmatch(sid) or sid in _RESERVED_IDS:
             errors.append(f"{sid!r}: scene ids must match {_SCENE_ID.pattern} and not be one of {sorted(_RESERVED_IDS)}")
+            continue
+        other = folded.setdefault(sid.casefold(), sid)
+        if other != sid:
+            errors.append(f"{sid}: scene ids {other!r} and {sid!r} differ only by case")
     timing_errors, timing_warnings = _timing_errors(scenes, timings)
     errors.extend(timing_errors)
     errors.extend(_brand_errors(brand))
@@ -395,12 +409,20 @@ def build_composition(
     palette_errors = merge_palette(style_def, brand.get("palette") if isinstance(brand, Mapping) else None)[1]
     errors.extend(palette_errors)
 
-    assets = dict(assets or {})
+    if errors:
+        raise CompositionError(errors)
+
+    assets = dict(assets) if isinstance(assets, Mapping) else {}
     referenced: dict[str, pathlib.Path] = {}
+    folded_assets: dict[str, str] = {}
     photo_meta: dict[str, tuple[str, int, int]] = {}
     for scene in scenes:
         for asset_id in scene_asset_ids(scene):
-            if asset_id in referenced or not isinstance(asset_id, str):
+            if asset_id in referenced:
+                continue
+            other = folded_assets.setdefault(asset_id.casefold(), asset_id)
+            if other != asset_id:
+                errors.append(f"asset ids {other!r} and {asset_id!r} differ only by case")
                 continue
             if asset_id not in assets:
                 errors.append(f"{scene.get('id')}: no asset {asset_id!r} was supplied")
@@ -417,12 +439,10 @@ def build_composition(
         narration = _as_path(narration)
         if narration is None or not narration.is_file() or narration.suffix.lower() not in _AUDIO_EXT:
             errors.append(f"assets[{NARRATION_KEY!r}]: must be an existing {sorted(_AUDIO_EXT)} file")
-    try:
-        gsap = verified_gsap()
-    except GsapUnavailable as exc:
-        errors.append(str(exc))
     if errors:
         raise CompositionError(errors)
+    # An environment problem, not an input problem: GsapUnavailable propagates.
+    gsap = verified_gsap()
 
     out_dir = pathlib.Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -465,7 +485,7 @@ def build_composition(
         "version": 1,
         "style": style,
         "fmt": fmt,
-        "title": (script or {}).get("title", "") if isinstance(script, Mapping) else "",
+        "title": script.get("title") if isinstance(script, Mapping) and isinstance(script.get("title"), str) else "",
         "scene_plan": {"scenes": scenes},
         "timings": {s["id"]: dict(timings[s["id"]]) for s in scenes},
         "photos": photos,
@@ -510,13 +530,46 @@ def _words(text: str) -> list[str]:
     return [w.casefold() for w in _WORD.findall(text)]
 
 
-def _is_subsequence(short: list[str], long: list[str]) -> bool:
-    it = iter(long)
-    return all(any(word == candidate for candidate in it) for word in short)
+_TRAILING_PUNCTUATION = ",;:.!?\u2026"
+
+
+def _drops_whole_words(shorter: str, current: str) -> bool:
+    """True when `shorter` is `current` with whole words removed.
+
+    Words are compared exactly (case, punctuation, symbols). Only the last
+    kept word may lose the sentence punctuation that followed it.
+    """
+    new, old = shorter.split(), current.split()
+    if not new:
+        return False
+    position = 0
+    for index, word in enumerate(new):
+        last = index == len(new) - 1
+        while position < len(old):
+            candidate = old[position]
+            position += 1
+            if word == candidate or (last and word == candidate.rstrip(_TRAILING_PUNCTUATION) and word):
+                break
+        else:
+            return False
+    return True
+
+
+def _non_finite(value: Any, path: str) -> list[str]:
+    if isinstance(value, float) and not math.isfinite(value):
+        return [f"{path}: must be a finite number"]
+    if isinstance(value, Mapping):
+        return [e for key, item in value.items() for e in _non_finite(item, f"{path}.{key}")]
+    if isinstance(value, list):
+        return [e for i, item in enumerate(value) for e in _non_finite(item, f"{path}[{i}]")]
+    return []
 
 
 def params_errors(state: dict[str, Any], params: Any) -> list[str]:
     """Problems with a review revision against a built composition."""
+    errors = _non_finite(params, "params")
+    if errors:
+        return errors
     validator = jsonschema.Draft202012Validator(load_params_schema())
     errors = sorted(
         f"params.{'.'.join(str(p) for p in e.absolute_path) or '(root)'}: {e.message}" for e in validator.iter_errors(params)
@@ -543,8 +596,8 @@ def params_errors(state: dict[str, Any], params: Any) -> list[str]:
             if len(text) >= len(current):
                 errors.append(f"{where}: must be shorter than the current {len(current)} characters")
             old_words, new_words = _words(current), _words(text)
-            if not _is_subsequence(new_words, old_words):
-                errors.append(f"{where}: may only drop words from {current!r}, not add or change them")
+            if not _drops_whole_words(text, current):
+                errors.append(f"{where}: may only drop whole words from {current!r}, not add or change them")
                 continue
             kept = set(new_words)
             for group, label in ((NEGATIONS, "negation"), (QUALIFIERS, "qualifier")):

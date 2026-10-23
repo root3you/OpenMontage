@@ -6,7 +6,7 @@
 {%- endmacro %}
 
 {% macro photo(p) -%}
-<div class="k-photo" id="{{ p.id }}" style="{{ p.box }}"><img id="{{ p.img_id }}" src="{{ p.src }}" alt="" style="object-position:{{ p.pos }};transform-origin:{{ p.pos }}"></div>
+<div class="k-photo" id="{{ p.id }}" style="{{ p.box }}"><img id="{{ p.img_id }}" src="{{ p.src }}" alt="" style="object-position:{{ p.pos }};transform-origin:{{ p.origin }}"></div>
 {%- endmacro %}
 
 {% macro cover(c, transition) -%}

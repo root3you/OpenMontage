@@ -106,7 +106,7 @@ def merge_palette(style: Style, override: Mapping[str, Any] | None) -> tuple[dic
             errors.append(f"brand.palette.{key}: unknown colour; allowed: {', '.join(PALETTE_KEYS)}")
         elif value is None:
             continue
-        elif not isinstance(value, str) or not _HEX.match(value):
+        elif not isinstance(value, str) or not _HEX.fullmatch(value):
             errors.append(f"brand.palette.{key}: {value!r} is not a #RRGGBB colour")
         else:
             palette[key] = value.upper()

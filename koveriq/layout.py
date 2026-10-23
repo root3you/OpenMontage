@@ -146,10 +146,14 @@ def normalise(word: str) -> str:
 
 
 def scene_words(timing: dict[str, Any]) -> list[tuple[str, float, float]]:
+    """Scene-local (word, start, end); words outside the scene are ignored."""
     start = timing["startMs"]
+    duration = (timing["endMs"] - start) / 1000
     out = []
     for word in timing.get("words") or []:
-        out.append((normalise(str(word.get("w", ""))), (word["startMs"] - start) / 1000, (word["endMs"] - start) / 1000))
+        at = (word["startMs"] - start) / 1000
+        if -0.05 <= at <= duration + 0.05:
+            out.append((normalise(str(word.get("w", ""))), at, (word["endMs"] - start) / 1000))
     return out
 
 
