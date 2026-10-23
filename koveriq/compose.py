@@ -144,8 +144,10 @@ def _brand_errors(brand: Any) -> list[str]:
         errors.append("brand.website: must not contain spaces")
     logo = brand.get("logoPath")
     if logo is not None:
-        path = pathlib.Path(logo)
-        if not path.is_file():
+        path = _as_path(logo)
+        if path is None:
+            errors.append(f"brand.logoPath: must be a file path, not {type(logo).__name__}")
+        elif not path.is_file():
             errors.append(f"brand.logoPath: {path} does not exist")
         elif path.suffix.lower() != ".svg" and _image_info(path) is None:
             errors.append(f"brand.logoPath: {path} is not a readable PNG, JPEG, WebP or SVG")
@@ -161,6 +163,16 @@ def _image_info(path: pathlib.Path) -> Optional[tuple[str, int, int]]:
             return image.format, image.width, image.height
     except (OSError, UnidentifiedImageError, ValueError):
         return None
+
+
+def _as_path(value: Any) -> Optional[pathlib.Path]:
+    """A filesystem path from str/PathLike, or None for anything else."""
+    if isinstance(value, (str, pathlib.PurePath)) or hasattr(value, "__fspath__"):
+        try:
+            return pathlib.Path(value)
+        except TypeError:
+            return None
+    return None
 
 
 def _display_website(website: str) -> str:
@@ -365,9 +377,9 @@ def build_composition(
 ) -> CompositionResult:
     """Write a HyperFrames project for one style and format into out_dir."""
     errors: list[str] = []
-    if style not in STYLE_DEFS:
+    if not isinstance(style, str) or style not in STYLE_DEFS:
         errors.append(f"style: {style!r} is not one of {list(STYLES)}")
-    if fmt not in FRAMES:
+    if not isinstance(fmt, str) or fmt not in FRAMES:
         errors.append(f"fmt: {fmt!r} is not one of {list(FORMATS)}")
     plan = from_checkpoint_scene_plan(scene_plan if isinstance(scene_plan, dict) else {})
     errors.extend(scene_plan_errors(plan))
@@ -379,7 +391,8 @@ def build_composition(
     timing_errors, timing_warnings = _timing_errors(scenes, timings)
     errors.extend(timing_errors)
     errors.extend(_brand_errors(brand))
-    palette_errors = merge_palette(STYLE_DEFS.get(style, STYLE_DEFS["clean"]), brand.get("palette") if isinstance(brand, Mapping) else None)[1]
+    style_def = STYLE_DEFS.get(style, STYLE_DEFS["clean"]) if isinstance(style, str) else STYLE_DEFS["clean"]
+    palette_errors = merge_palette(style_def, brand.get("palette") if isinstance(brand, Mapping) else None)[1]
     errors.extend(palette_errors)
 
     assets = dict(assets or {})
@@ -392,17 +405,17 @@ def build_composition(
             if asset_id not in assets:
                 errors.append(f"{scene.get('id')}: no asset {asset_id!r} was supplied")
                 continue
-            path = pathlib.Path(assets[asset_id])
-            info = _image_info(path) if path.is_file() else None
-            if info is None:
-                errors.append(f"asset {asset_id}: {path} is not a readable JPEG, PNG or WebP image")
+            path = _as_path(assets[asset_id])
+            info = _image_info(path) if path is not None and path.is_file() else None
+            if path is None or info is None:
+                errors.append(f"asset {asset_id}: {assets[asset_id]!r} is not a readable JPEG, PNG or WebP image")
                 continue
             referenced[asset_id] = path
             photo_meta[asset_id] = info
     narration = assets.get(NARRATION_KEY)
     if narration is not None:
-        narration = pathlib.Path(narration)
-        if not narration.is_file() or narration.suffix.lower() not in _AUDIO_EXT:
+        narration = _as_path(narration)
+        if narration is None or not narration.is_file() or narration.suffix.lower() not in _AUDIO_EXT:
             errors.append(f"assets[{NARRATION_KEY!r}]: must be an existing {sorted(_AUDIO_EXT)} file")
     try:
         gsap = verified_gsap()

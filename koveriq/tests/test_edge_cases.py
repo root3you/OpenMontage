@@ -209,3 +209,21 @@ def test_checkpoint_helper_guards(tmp_path) -> None:
     brief = {"version": "1.0", "title": "t", "hook": "h", "key_points": ["k"], "tone": "t", "style": "s", "target_platform": "generic", "target_duration_seconds": 30, "metadata": "x"}
     with pytest.raises(ValueError, match="metadata"):
         write_brief_checkpoint(tmp_path, "vid", brief, user_id="u")
+
+
+@pytest.mark.parametrize(
+    "override, message",
+    [
+        (lambda a: a["assets"].update({"a-1": 5}), "a-1"),
+        (lambda a: a.update(style=["clean"]), "style"),
+        (lambda a: a.update(fmt={"16:9": 1}), "fmt"),
+        (lambda a: a.update(brand={**brand(), "logoPath": 7}), "logoPath"),
+        (lambda a: a.update(assets={**a["assets"], "@narration": 3}), "@narration"),
+    ],
+)
+def test_wrong_types_raise_composition_errors_not_type_errors(tmp_path, override, message) -> None:
+    plan, script, timings = plan_for(["photo_pan", "cta_endcard"])
+    args = {"scene_plan": plan, "script": script, "timings": timings, "assets": make_assets(tmp_path), "style": "clean", "fmt": "16:9", "brand": brand(), "out_dir": tmp_path / "c"}
+    override(args)
+    with pytest.raises(CompositionError, match=message):
+        build_composition(**args)
