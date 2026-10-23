@@ -28,7 +28,7 @@ class PhotoInfo:
 @dataclass(frozen=True)
 class BrandView:
     name: str
-    website: str
+    website: Optional[str]  # None: the brand kit has no website, the end card has no pill
     logo_src: Optional[str]
     logo_w: int = 0
     logo_h: int = 0
@@ -543,10 +543,11 @@ def cta_endcard(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, b
         col_w = F.content_w
         col = f"left:{F.pad_x}px;top:{top}px;width:{col_w}px;height:{bottom - top}px"
         justify = "start" if photo else "center"
-    cta_lines = 3 if F.name != "square" or not photo else 2
     texts = {
         "over": ctx.text("overline", s.get("overline"), "over", "over", col_w, 1),
-        "cta": ctx.text("cta", s.get("cta"), "head", "cta", col_w, cta_lines, min_ratio=0.55),
+        # The CTA is the brief's, word for word (up to 120 characters): it is
+        # never cut, only shrunk and wrapped (two lines while they stay legible).
+        "cta": ctx.text_ladder("cta", s.get("cta"), "head", "cta", col_w),
         "website": ctx.text("website", brand.website, "pill", "pill", min(col_w, 900) - 96, 1, min_ratio=0.75),
     }
     step_texts = [ctx.text(f"steps.{i}", t_, "item", "item", 300, 1, min_ratio=0.85) for i, t_ in enumerate(s.get("steps") or [])]
@@ -565,10 +566,14 @@ def cta_endcard(ctx: SceneContext, res: Resources, m: Motion, flags: dict[str, b
         m.item(el_id, at)
     pill_at = _compress(ctx, max(t + 1.3, (times[-1] + 0.4) if times else 0))
     pill_at = min(pill_at, max(0.3, ctx.duration - 2.0))
-    m.pop(f"{ctx.sid}-pill", pill_at)
-    m.text(f"{ctx.sid}-brand", min(pill_at + 0.4, max(0.4, ctx.duration - 1.6)))
-    if ctx.duration - pill_at > 2.6:
-        m.pulse(f"{ctx.sid}-pill", pill_at + 1.4)
+    if texts["website"]:
+        m.pop(f"{ctx.sid}-pill", pill_at)
+        m.text(f"{ctx.sid}-brand", min(pill_at + 0.4, max(0.4, ctx.duration - 1.6)))
+        if ctx.duration - pill_at > 2.6:
+            m.pulse(f"{ctx.sid}-pill", pill_at + 1.4)
+    else:
+        # No website: the lock-up closes the card and takes the pill's beat.
+        m.pop(f"{ctx.sid}-brand", pill_at)
     return {
         "photo": photo,
         "cover": cover,

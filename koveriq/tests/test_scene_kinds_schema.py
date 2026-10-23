@@ -83,7 +83,9 @@ def test_text_slots_have_max_lengths() -> None:
     scene["slots"]["headline"] = "x" * 41
     assert slot_errors(scene)
     scene = example("cta_endcard")
-    scene["slots"]["cta"] = "x" * 41
+    scene["slots"]["cta"] = "x" * 120  # the contract's limit (brief.cta)
+    assert not slot_errors(scene)
+    scene["slots"]["cta"] = "x" * 121
     assert slot_errors(scene)
 
 

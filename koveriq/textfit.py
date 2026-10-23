@@ -98,6 +98,47 @@ def fit_text(
     return Fit(px=int(min_px), lines=_original_case(text, lines), width=widest, fits=False)
 
 
+def balance(
+    text: str,
+    lines: int,
+    *,
+    family: str,
+    weight: int,
+    px: float,
+    uppercase: bool = False,
+    letter_spacing_em: float = 0.0,
+) -> list[str]:
+    """Break `text` into exactly `lines` lines (fewer if it has fewer words) so
+    the widest line is as narrow as possible, as CSS `text-wrap: balance` does.
+
+    Greedy wrapping can leave one word alone on the last line ("Book your free
+    home / survey"); this never makes the widest line wider than greedy's, so
+    whatever fitted still fits. Lines keep the original case.
+    """
+    words = text.split()
+    n = max(1, min(lines, len(words)))
+    shown = [w.upper() for w in words] if uppercase else words
+
+    def width(i: int, j: int) -> float:
+        return text_width(" ".join(shown[i:j]), family, weight, px=px, letter_spacing_em=letter_spacing_em)
+
+    # best[k][i]: (widest line, breaks) for words[i:] in k lines.
+    inf = (float("inf"), ())
+    best = [[inf] * (len(words) + 1) for _ in range(n + 1)]
+    best[0][len(words)] = (0.0, ())
+    for k in range(1, n + 1):
+        for i in range(len(words) - 1, -1, -1):
+            for j in range(i + 1, len(words) - k + 2):
+                rest = best[k - 1][j]
+                if rest[0] == float("inf"):
+                    continue
+                candidate = (max(width(i, j), rest[0]), (j, *rest[1]))
+                if candidate[0] < best[k][i][0]:
+                    best[k][i] = candidate
+    cuts = [0, *best[n][0][1]]
+    return [" ".join(words[a:b]) for a, b in zip(cuts, cuts[1:])]
+
+
 def _original_case(text: str, lines: list[str]) -> list[str]:
     """Re-chunk the original words like the measured (maybe uppercased) lines.
 

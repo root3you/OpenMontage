@@ -15,8 +15,9 @@ Inputs
   reserved key "@narration": a full-length narration audio file aligned to
   t=0 (HyperFrames then mixes it in; without it the composition is silent).
 - style: "clean" | "bold_offer"; fmt: "16:9" | "9:16" | "1:1".
-- brand: {"companyName", "website", "logoPath"?: Path, "palette"?: {bg,
-  surface, ink, muted, accent, accentInk as #RRGGBB}}.
+- brand: {"companyName", "website"?, "logoPath"?: Path, "palette"?: {bg,
+  surface, ink, muted, accent, accentInk as #RRGGBB}}. Without a website
+  (missing, None or "") the end card has no website pill.
 
 Output (out_dir): index.html (root), compositions/<sceneId>.html (one
 sub-composition per scene, plus brand.html), assets/ (copied photos, logo,
@@ -136,16 +137,24 @@ def _timing_errors(scenes: list[dict[str, Any]], timings: Any) -> tuple[list[str
     return errors, warnings
 
 
+def _has_website(brand: Mapping[str, Any]) -> bool:
+    """A brand kit without a website (missing, None or "") has no website line."""
+    return brand.get("website") not in (None, "")
+
+
 def _brand_errors(brand: Any) -> list[str]:
     if not isinstance(brand, Mapping):
         return ["brand: must be an object"]
     errors = []
-    for key, limit in (("companyName", 60), ("website", 80)):
-        value = brand.get(key)
-        if not isinstance(value, str) or not _LINE.fullmatch(value) or len(value) > limit:
-            errors.append(f"brand.{key}: required, one trimmed line of at most {limit} characters")
-    if isinstance(brand.get("website"), str) and re.search(r"\s", brand["website"]):
-        errors.append("brand.website: must not contain spaces")
+    value = brand.get("companyName")
+    if not isinstance(value, str) or not _LINE.fullmatch(value) or len(value) > 60:
+        errors.append("brand.companyName: required, one trimmed line of at most 60 characters")
+    if _has_website(brand):
+        value = brand["website"]
+        if not isinstance(value, str) or not _LINE.fullmatch(value) or len(value) > 80:
+            errors.append("brand.website: optional, else one trimmed line of at most 80 characters")
+        elif re.search(r"\s", value):
+            errors.append("brand.website: must not contain spaces")
     logo = brand.get("logoPath")
     if logo is not None:
         path = _as_path(logo)
@@ -179,7 +188,9 @@ def _as_path(value: Any) -> Optional[pathlib.Path]:
     return None
 
 
-def _display_website(website: str) -> str:
+def _display_website(website: Optional[str]) -> Optional[str]:
+    if not website:
+        return None
     return re.sub(r"^https?://", "", website).rstrip("/")
 
 
@@ -227,7 +238,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
         photos={aid: PhotoInfo(**info) for aid, info in state["photos"].items()},
         brand=BrandView(
             name=brand["companyName"],
-            website=_display_website(brand["website"]),
+            website=_display_website(brand.get("website")),
             logo_src=brand.get("logo"),
             logo_w=brand.get("logoW", 0),
             logo_h=brand.get("logoH", 0),
@@ -483,7 +494,7 @@ def build_composition(
 
     brand_state: dict[str, Any] = {
         "companyName": brand["companyName"],
-        "website": brand["website"],
+        "website": brand["website"] if _has_website(brand) else None,
         "palette": dict(brand.get("palette") or {}),
     }
     if brand.get("logoPath"):

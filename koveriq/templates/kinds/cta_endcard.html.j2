@@ -17,7 +17,7 @@
 {{ k.text(v.over, sid ~ "-over", "k-over") }}
 {{ k.text(v.cta, sid ~ "-cta", "k-head", "h2") }}
 {% if v.steps %}<div class="k-ctasteps">{% for st in v.steps %}<div class="k-ctastep" id="{{ st.id }}"><div class="k-num k-mini">{{ st.n }}</div>{{ k.text(st.label, st.id ~ "-label", "k-item") }}</div>{% endfor %}</div>{% endif %}
-<div class="k-pill" id="{{ sid }}-pill">{{ k.text(v.website, sid ~ "-url", "k-pilltext") }}</div>
+{% if v.website %}<div class="k-pill" id="{{ sid }}-pill">{{ k.text(v.website, sid ~ "-url", "k-pilltext") }}</div>{% endif %}
 <div class="k-lockup" id="{{ sid }}-brand">{% if v.logo %}<img src="{{ v.logo }}" alt="" style="height:{{ v.logo_h }}px">{% else %}{{ k.text(v.mark, sid ~ "-mark", "k-mark") }}{% endif %}</div>
 </div>
 {% endblock %}

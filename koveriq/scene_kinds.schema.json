@@ -675,7 +675,7 @@
       }
     },
     "cta_endcard": {
-      "description": "The call to action (brief.cta), the brand website and the brand lock-up. The website comes from the brand kit, never from a slot.",
+      "description": "The call to action (brief.cta), the brand website and the brand lock-up. The website comes from the brand kit, never from a slot; a brand kit without one shows no website line.",
       "type": "object",
       "required": [
         "cta"
@@ -686,12 +686,13 @@
           "$ref": "#/$defs/overline"
         },
         "cta": {
+          "description": "The brief's CTA word for word, up to the contract's 120 characters. The end card shrinks and wraps it to fit; it is never cut.",
           "allOf": [
             {
               "$ref": "#/$defs/line"
             },
             {
-              "maxLength": 40
+              "maxLength": 120
             }
           ]
         },

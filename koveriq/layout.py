@@ -10,7 +10,7 @@ from typing import Any, Optional
 from markupsafe import Markup, escape
 
 from koveriq.styles import Style
-from koveriq.textfit import fit_text, text_width
+from koveriq.textfit import Fit, balance, fit_text, text_width
 
 MIN_TEXT_PX = 28  # HyperFrames' text_below_floor: 2.6% of a 1080 short side
 
@@ -125,9 +125,71 @@ class SceneContext:
                 f"text_fit:{self.sid}.{slot}: does not fit {int(box_w)}px in {max_lines} line(s) "
                 f"even at {fit.px}px; shorten it"
             )
+        return self._block(slot, fit, box_w)
+
+    def _block(self, slot: str, fit: Fit, box_w: float) -> Text:
         # Element width hugs the widest measured line plus the fitter's margin.
         width = int(min(box_w, fit.width / 0.95 + 4)) if fit.fits else int(fit.width + 4)
         return Text(slot=slot, lines=fit.lines, px=fit.px, width=max(width, 1), fits=fit.fits)
+
+    def text_ladder(
+        self,
+        slot: str,
+        value: Optional[str],
+        role: str,
+        size: str,
+        box_w: float,
+        *,
+        lines: tuple[int, ...] = (2, 3, 4),
+        floor_ratio: float = 0.45,
+    ) -> Optional[Text]:
+        """Fit text that must always appear in full (the CTA) in as few lines
+        as stay legible.
+
+        For each line budget in turn, the size shrinks in 1 px steps from the
+        base size down to the legible floor (`floor_ratio` of the base, never
+        under MIN_TEXT_PX); the first budget that fits wins, and its lines are
+        balanced. If even the last budget does not fit at the floor, the text
+        keeps shrinking to MIN_TEXT_PX, and if it still does not fit it is
+        wrapped at MIN_TEXT_PX into as many lines as it takes, with a text_fit
+        warning. Words are never dropped or cut.
+        """
+        if not value:
+            return None
+        spec = self.style.roles[role]
+        base = max(MIN_TEXT_PX, int(round(self.sizes[size] * self.font_scale)))
+        floor = min(base, max(MIN_TEXT_PX, int(round(self.sizes[size] * floor_ratio))))
+        face = {
+            "family": spec.family,
+            "weight": spec.weight,
+            "box_w": box_w,
+            "uppercase": spec.upper,
+            "letter_spacing_em": spec.tracking,
+        }
+        for budget in lines:
+            fit = fit_text(value, max_lines=budget, base_px=base, min_px=floor, **face)
+            if fit.fits:
+                break
+        else:
+            fit = fit_text(value, max_lines=lines[-1], base_px=floor, min_px=MIN_TEXT_PX, **face)
+        if fit.fits:
+            balanced = balance(
+                value,
+                len(fit.lines),
+                family=spec.family,
+                weight=spec.weight,
+                px=fit.px,
+                uppercase=spec.upper,
+                letter_spacing_em=spec.tracking,
+            )
+            widest = max(self.measure(line, role, fit.px) for line in balanced)
+            fit = Fit(px=fit.px, lines=balanced, width=widest, fits=True)
+        else:
+            self.warnings.append(
+                f"text_fit:{self.sid}.{slot}: does not fit {int(box_w)}px in {lines[-1]} line(s) "
+                f"even at {fit.px}px; it is shown in full but overflows its column"
+            )
+        return self._block(slot, fit, box_w)
 
     def measure(self, value: str, role: str, px: float) -> float:
         spec = self.style.roles[role]

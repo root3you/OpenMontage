@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from koveriq.textfit import fit_text, text_width, wrap
+from koveriq.textfit import balance, fit_text, text_width, wrap
 
 HEAD = ("Playfair Display", 900)
 BODY = ("Montserrat", 700)
@@ -69,3 +69,23 @@ def test_lines_keep_the_original_casing_when_wrapped_in_capitals() -> None:
 def test_unknown_face_is_an_error() -> None:
     with pytest.raises(KeyError):
         text_width("x", "Comic Sans MS", 400, px=10)
+
+
+def test_balance_avoids_a_lone_last_word() -> None:
+    text = "Book your free home survey"
+    greedy = wrap(text, *HEAD, px=100, box_w=1000)
+    balanced = balance(text, 2, family=HEAD[0], weight=HEAD[1], px=100)
+    assert greedy == ["Book your free home", "survey"]
+    assert balanced == ["Book your free", "home survey"]
+    widest = lambda lines: max(text_width(l, *HEAD, px=100) for l in lines)  # noqa: E731
+    assert widest(balanced) <= widest(greedy)
+
+
+def test_balance_keeps_every_word_in_order_and_the_original_case() -> None:
+    text = "Get 15% off made-to-measure shutters this month"
+    lines = balance(text, 3, family="Archivo Black", weight=400, px=60, uppercase=True)
+    assert len(lines) == 3 and " ".join(lines) == text
+
+
+def test_balance_with_more_lines_than_words() -> None:
+    assert balance("Call us", 4, family=BODY[0], weight=BODY[1], px=50) == ["Call", "us"]
