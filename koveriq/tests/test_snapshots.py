@@ -1,6 +1,6 @@
 """Rendered evidence for lane W3: the end card's CTA at 40, 80 and 120
 characters (with and without a website) and burned-in captions on and off, in
-both styles and all three formats.
+every style and all three formats.
 
 Each composition is linted, audited in the browser with `hyperframes check`
 (no layout errors: nothing overflows, is clipped or overlaps; with captions

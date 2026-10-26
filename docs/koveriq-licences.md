@@ -15,7 +15,7 @@ counsel's) decision before production.
 | Piper engine (`piper-tts` ≥ 1.3, piper1-gpl) | GPL-3.0-or-later | Allowed | Separate process in the worker; source published with the worker |
 | HyperFrames CLI 0.8.185 | Apache-2.0 | **Allowed** for hosted commercial use | Pinned version; telemetry and update checks off |
 | GSAP 3.14.2 | GreenSock "Standard no charge" licence (Webflow) | Use allowed; **redistribution unclear** | **Not committed**; fetched at build time with pinned integrity |
-| Montserrat, Playfair Display, Archivo Black | SIL OFL 1.1 | Allowed | Embedded by HyperFrames; not shipped by the fork |
+| Montserrat, Playfair Display, Archivo Black, EB Garamond, Lato, Inter | SIL OFL 1.1 | Allowed | Embedded by HyperFrames; not shipped by the fork |
 | OpenMontage | AGPL-3.0 | — | Public fork; the `koveriq/` package is part of it |
 | Golden demo photos | CC BY-SA 4.0 | Golden only, **never production** | Attributed in `koveriq/golden/README.md` |
 
@@ -145,12 +145,17 @@ Decisions:
 
 | Family | Licence | Weights the templates use |
 |---|---|---|
-| Montserrat | SIL OFL 1.1 ("Copyright 2024 The Montserrat.Git Project Authors") | 400, 700, 900 |
-| Playfair Display | SIL OFL 1.1 (Reserved Font Name "Playfair Display") | 900 |
-| Archivo Black | SIL OFL 1.1 | 400 |
+| Montserrat | SIL OFL 1.1 ("Copyright 2024 The Montserrat.Git Project Authors") | 400, 700, 900 (Clean, Bold offer) |
+| Playfair Display | SIL OFL 1.1 (Reserved Font Name "Playfair Display") | 900 (Clean) |
+| Archivo Black | SIL OFL 1.1 | 400 (Bold offer) |
+| EB Garamond | SIL OFL 1.1 ("Copyright 2017 The EB Garamond Project Authors") | 400 (Showroom) |
+| Lato | SIL OFL 1.1 ("Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic with Reserved Font Name "Lato"") | 400, 700 (Showroom) |
+| Inter | SIL OFL 1.1 ("Copyright 2016 The Inter Project Authors") | 400, 700 (Minimal) |
 
 Sources: `@fontsource/<family>` npm metadata (`OFL-1.1`) and google/fonts
-`OFL.txt`. The fork ships no font files (HyperFrames embeds them), and the OFL
+`OFL.txt`; the EB Garamond, Lato and Inter notices are the `name` table
+copyright lines of the faces embedded in HyperFrames 0.8.185. The fork ships
+no font files (HyperFrames embeds them), and the OFL
 does not extend to videos made with the fonts. If the worker image
 redistributes font files, it must include the OFL text and copyright notices
 (the hyperframes tarball does not).

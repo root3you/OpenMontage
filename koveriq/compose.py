@@ -15,7 +15,8 @@ Inputs
 - assets: {assetId: Path} to EXIF-stripped JPEG/PNG/WebP photos. Optional
   reserved key "@narration": a full-length narration audio file aligned to
   t=0 (HyperFrames then mixes it in; without it the composition is silent).
-- style: "clean" | "bold_offer"; fmt: "16:9" | "9:16" | "1:1".
+- style: "clean" | "bold_offer" | "showroom" | "minimal" (koveriq.styles);
+  fmt: "16:9" | "9:16" | "1:1".
 - brand: {"companyName", "website"?, "logoPath"?: Path, "palette"?: {bg,
   surface, ink, muted, accent, accentInk as #RRGGBB}}. Without a website
   (missing, None or "") the end card has no website pill.
@@ -251,14 +252,14 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
     )
     env = _env()
     roles = {name: Markup(role.css()) for name, role in style.roles.items()}
-    shade = rgba(palette["ink"] if style.name == "clean" else palette["bg"], 0.55 if style.name == "clean" else 0.75)
-    decor = rgba(palette["ink"], 0.06) if style.name == "clean" else rgba(palette["accent"], 0.16)
+    # The style's derived colours follow the brand palette.
+    shade, decor, line = (Markup(rgba(palette[key], alpha)) for key, alpha in (style.shade, style.decor, style.line))
     style_css: dict[Frame, Markup] = {}
 
     def css_for(f: Frame) -> Markup:
         if f not in style_css:
             style_css[f] = Markup(
-                env.get_template(f"styles/{style.name}.css.j2").render(roles=roles, radius=style.radius, F=f, shade=Markup(shade), decor=Markup(decor))
+                env.get_template(f"styles/{style.name}.css.j2").render(roles=roles, radius=style.radius, F=f, shade=shade, decor=decor, line=line)
             )
         return style_css[f]
 
@@ -302,7 +303,7 @@ def _render(out_dir: pathlib.Path, state: dict[str, Any]) -> list[str]:
             font_scale=font_scale,
         )
         tweens = Tweens()
-        motion = Motion(style.name, tweens, sid)
+        motion = Motion(style, tweens, sid)
         flags = {"tin": index > 0, "tout": index < len(scenes) - 1}
         view = KIND_BUILDERS[kind](ctx, resources, motion, flags)
         if flags["tin"]:
@@ -393,16 +394,16 @@ def _captions(env: Environment, state: dict[str, Any], style, frame: Frame, pale
             warnings.append(f"text_fit:captions.g{number}: {cue.text!r} does not fit the caption box")
         groups.append({"id": f"captions-g{number}", "px": fit.px, "html": Markup("<br>").join(escape(line) for line in fit.lines)})
     tweens = caps.tweens(cues, [g["id"] for g in groups])
-    bold = style.name == "bold_offer"
+    backing, shadow = caps.backing(style.name, palette)
     return env.get_template("captions.html.j2").render(
         F=frame,
         top=caps.band_top(frame),
         band=band,
         role_css=Markup(role.css()),
         fg=palette["ink"],
-        bg=Markup(rgba(palette["bg"], 0.86) if bold else rgba(palette["surface"], 0.94)),
+        bg=Markup(backing),
         radius=style.radius,
-        shadow=Markup(f"inset 0 -6px 0 {palette['accent']}, 0 10px 28px rgba(0,0,0,.3)" if bold else "0 10px 28px rgba(20,16,10,.22)"),
+        shadow=Markup(shadow),
         groups=groups,
         tweens=[Markup(line) for line in tweens.lines],
     )

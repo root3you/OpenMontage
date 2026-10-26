@@ -160,7 +160,7 @@ def test_missing_gsap_is_not_a_composition_error(tmp_path, monkeypatch) -> None:
 
 
 def test_short_scenes_finish_their_entrances_before_the_cover(tmp_path) -> None:
-    for style in ("clean", "bold_offer"):
+    for style in ("clean", "bold_offer", "showroom", "minimal"):
         plan, script, timings = plan_for(["photo_reveal", "photo_pan", "option_chips", "text_card", "cta_endcard"], [4, 1.6, 1.8, 2.2, 4])
         build_composition(plan, script, timings, make_assets(tmp_path), style, "16:9", brand(), tmp_path / style)
         for sid, dur in (("sc2", 1.6), ("sc3", 1.8), ("sc4", 2.2)):

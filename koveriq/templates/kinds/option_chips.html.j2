@@ -2,7 +2,7 @@
 {% block css %}
 .k-chipwrap { position: absolute; display: flex; flex-direction: column; }
 .k-panel { display: flex; flex-direction: column; gap: 20px; }
-.k-onphoto .k-panel { background: var(--surface); border-radius: {{ radius }}px; box-shadow: 0 26px 70px rgba(0,0,0,.25); }
+.k-onphoto .k-panel { background: var(--surface); border-radius: {{ radius }}px; box-shadow: {{ "var(--lift)" if style_name in ("showroom", "minimal") else "0 26px 70px rgba(0,0,0,.25)" }}; }
 .k-chiprow { display: flex; gap: 18px; }
 {% if F.name == "landscape" %}
 .k-chipwrap { left: {{ F.pad_x }}px; bottom: {{ F.pad_bottom }}px; }

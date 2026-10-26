@@ -27,6 +27,10 @@ FACES = {
     "Montserrat": ("montserrat", [400, 700, 900]),
     "Playfair Display": ("playfair-display", [400, 700, 900]),
     "Archivo Black": ("archivo-black", [400]),
+    # Showroom (EB Garamond, Lato) and Minimal (Inter).
+    "EB Garamond": ("eb-garamond", [400, 700]),
+    "Lato": ("lato", [400, 700, 900]),
+    "Inter": ("inter", [400, 700, 900]),
 }
 CHARS = (
     [chr(c) for c in range(0x20, 0x7F)]

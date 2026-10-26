@@ -28,7 +28,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Callable, Mapping, Sequence
 
 from koveriq.layout import Frame, Tweens
-from koveriq.styles import TextRole
+from koveriq.styles import TextRole, rgba
 
 MAX_WORDS = 3
 PAUSE = 0.15  # s: a gap this long between two words starts a new group
@@ -68,7 +68,21 @@ BAND = {
 ROLES = {
     "clean": TextRole("Montserrat", 700, line=1.2),
     "bold_offer": TextRole("Montserrat", 900, upper=True, tracking=0.03, line=1.15),
+    "showroom": TextRole("Lato", 700, tracking=0.01, line=1.2),
+    "minimal": TextRole("Inter", 700, line=1.2),
 }
+
+
+def backing(style: str, palette: Mapping[str, str]) -> tuple[str, str]:
+    """The caption box's (background, box-shadow) in a style, from its palette.
+    The words are always the palette's ink."""
+    if style == "bold_offer":  # dark scrim, accent edge
+        return rgba(palette["bg"], 0.86), f"inset 0 -6px 0 {palette['accent']}, 0 10px 28px rgba(0,0,0,.3)"
+    if style == "showroom":  # espresso scrim, brass hairline under the words
+        return rgba(palette["bg"], 0.88), f"inset 0 -2px 0 {palette['accent']}, 0 10px 28px rgba(0,0,0,.3)"
+    if style == "minimal":  # white and flat, a faint lift
+        return rgba(palette["surface"], 0.96), "0 6px 18px rgba(0,0,0,.1)"
+    return rgba(palette["surface"], 0.94), "0 10px 28px rgba(20,16,10,.22)"  # clean: paper
 
 
 @dataclass(frozen=True)

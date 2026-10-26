@@ -2,8 +2,12 @@
 {% block css %}
 .k-offerbg { background: {{ "var(--accent)" if style_name == "bold_offer" else "var(--surface)" }}; }
 .k-offer { {{ "--c-over: var(--accent-ink); --c-head: var(--accent-ink); --c-sub: var(--accent-ink);" if style_name == "bold_offer" else "--c-head: var(--accent);" }} }
-.k-tilt { transform: rotate(-4deg); }
+.k-tilt { transform: {{ "none" if style_name in ("showroom", "minimal") else "rotate(-4deg)" }}; }
+{% if style_name == "showroom" %}
+.k-badge { display: block; border-radius: {{ radius }}px; padding: 14px 30px; background: transparent; color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+{% else %}
 .k-badge { display: block; border-radius: {{ radius }}px; padding: 14px 30px; background: {{ "var(--bg)" if style_name == "bold_offer" else "var(--accent)" }}; color: {{ "var(--ink)" if style_name == "bold_offer" else "var(--accent-ink)" }}; }
+{% endif %}
 {% if F.name == "landscape" %}.k-decor { left: -120px; top: 860px; width: 2160px; height: 320px; }
 {% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1580px; width: 1200px; height: 400px; }
 {% else %}.k-decor { left: -60px; top: 930px; width: 1200px; height: 220px; }{% endif %}

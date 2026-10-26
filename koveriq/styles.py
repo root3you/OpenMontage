@@ -1,9 +1,15 @@
-"""The two KoverIQ template styles: tokens, text roles and palette checks.
+"""The four KoverIQ template styles: tokens, text roles and palette checks.
+
+Clean (warm paper, black serif headlines, louvres), Bold offer (dark,
+uppercase, block wipes), Showroom (espresso and brass, a fine serif, framed
+photos, louvres) and Minimal (near-monochrome, light type, one accent, soft
+fades): the four templates of the KoverIQ wizard and the worker contract.
 
 Text roles are the single source of truth for typography: the style CSS is
 generated from them and the text fitter measures with them, so what is
 measured is what renders. Only fonts and weights that HyperFrames embeds are
-used (no font is downloaded at render time).
+used (no font is downloaded at render time): Montserrat 400/700/900, Playfair
+Display 900, Archivo Black 400, EB Garamond 400, Lato 400/700, Inter 400/700.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ from typing import Any, Mapping
 
 PALETTE_KEYS = ("bg", "surface", "ink", "muted", "accent", "accentInk")
 _HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
+SERIF_FAMILIES = frozenset({"Playfair Display", "EB Garamond"})
 
 
 @dataclass(frozen=True)
@@ -25,7 +32,7 @@ class TextRole:
     line: float = 1.1  # line-height
 
     def css(self) -> str:
-        fallback = "serif" if self.family == "Playfair Display" else "sans-serif"
+        fallback = "serif" if self.family in SERIF_FAMILIES else "sans-serif"
         parts = [
             f'font-family: "{self.family}", {fallback}',
             f"font-weight: {self.weight}",
@@ -42,7 +49,11 @@ class Style:
     palette: dict[str, str]
     roles: dict[str, TextRole]
     radius: int
-    transition: str  # "louvres" | "blocks"
+    transition: str  # "louvres" | "blocks" | "fade" (koveriq.kinds.Motion)
+    # Colours derived from the (brand-merged) palette: (palette key, opacity).
+    shade: tuple[str, float]  # the gradient that settles photos under text
+    decor: tuple[str, float]  # the slow-drifting pattern of text-only scenes
+    line: tuple[str, float] = ("ink", 0.12)  # hairline frames (Showroom, Minimal)
 
 
 STYLES: dict[str, Style] = {
@@ -67,6 +78,8 @@ STYLES: dict[str, Style] = {
         },
         radius=6,
         transition="louvres",
+        shade=("ink", 0.55),
+        decor=("ink", 0.06),
     ),
     "bold_offer": Style(
         name="bold_offer",
@@ -89,6 +102,64 @@ STYLES: dict[str, Style] = {
         },
         radius=14,
         transition="blocks",
+        shade=("bg", 0.75),
+        decor=("accent", 0.16),
+    ),
+    # A premium interior after dark: espresso and walnut, cream type, brass
+    # detail; a fine serif for headlines with widely tracked small capitals,
+    # hairline brass frames and the louvre transition.
+    "showroom": Style(
+        name="showroom",
+        palette={
+            "bg": "#221A15",
+            "surface": "#2E241E",
+            "ink": "#F4EBDD",
+            "muted": "#CDBDA8",
+            "accent": "#C9A36A",
+            "accentInk": "#221A15",
+        },
+        roles={
+            "over": TextRole("Lato", 700, upper=True, tracking=0.26, line=1.2),
+            "head": TextRole("EB Garamond", 400, line=1.08),
+            "sub": TextRole("Lato", 400, line=1.36),
+            "item": TextRole("Lato", 700, tracking=0.02, line=1.15),
+            "big": TextRole("EB Garamond", 400, line=1.0),
+            "pill": TextRole("Lato", 700, tracking=0.06, line=1.1),
+            "mark": TextRole("Lato", 700, upper=True, tracking=0.3, line=1.1),
+        },
+        radius=2,
+        transition="louvres",
+        shade=("bg", 0.8),
+        decor=("accent", 0.18),
+        line=("accent", 0.55),
+    ),
+    # Restraint: off-white and white, near-black type at the lightest embedded
+    # weight, one cool accent, hairlines instead of shadows, square corners and
+    # soft fades through the background between scenes.
+    "minimal": Style(
+        name="minimal",
+        palette={
+            "bg": "#F7F7F5",
+            "surface": "#FFFFFF",
+            "ink": "#141414",
+            "muted": "#5E6166",
+            "accent": "#2B5B84",
+            "accentInk": "#FFFFFF",
+        },
+        roles={
+            "over": TextRole("Inter", 400, upper=True, tracking=0.24, line=1.2),
+            "head": TextRole("Inter", 400, tracking=-0.02, line=1.08),
+            "sub": TextRole("Inter", 400, line=1.45),
+            "item": TextRole("Inter", 400, line=1.2),
+            "big": TextRole("Inter", 400, tracking=-0.03, line=1.0),
+            "pill": TextRole("Inter", 400, tracking=0.01, line=1.1),
+            "mark": TextRole("Inter", 700, upper=True, tracking=0.22, line=1.1),
+        },
+        radius=0,
+        transition="fade",
+        shade=("ink", 0.2),
+        decor=("ink", 0.14),
+        line=("ink", 0.16),
     ),
 }
 

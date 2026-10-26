@@ -2,7 +2,7 @@
 {% block css %}
 .k-townblock { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
 .k-boxed { background: var(--surface); border-radius: {{ radius }}px; box-shadow: 0 26px 70px rgba(0,0,0,.28); }
-{{ ".k-boxed { background: var(--accent); --c-over: var(--accent-ink); --c-head: var(--accent-ink); --c-sub: var(--accent-ink); }" if style_name == "bold_offer" else "" }}
+{{ ".k-boxed { background: var(--accent); --c-over: var(--accent-ink); --c-head: var(--accent-ink); --c-sub: var(--accent-ink); }" if style_name == "bold_offer" else ".k-boxed { box-shadow: var(--lift); }" if style_name in ("showroom", "minimal") else "" }}
 .k-pin { display: block; color: var(--c-over, var(--accent)); }
 {% if F.name == "landscape" %}.k-decor { left: -120px; top: 760px; width: 2160px; height: 420px; }
 {% elif F.name == "portrait" %}.k-decor { left: -60px; top: 1540px; width: 1200px; height: 440px; }

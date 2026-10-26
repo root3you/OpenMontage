@@ -57,7 +57,8 @@ def test_contract_signatures() -> None:
     from koveriq.compose import apply_params
 
     assert list(inspect.signature(apply_params).parameters) == ["comp_dir", "params"]
-    assert set(STYLES) == {"clean", "bold_offer"}
+    # The four templates of the KoverIQ wizard and the worker contract.
+    assert set(STYLES) == {"clean", "bold_offer", "showroom", "minimal"}
     assert set(FORMATS) == {"16:9", "9:16", "1:1"}
 
 
@@ -149,8 +150,8 @@ def test_invalid_brand_is_rejected(tmp_path, bad_brand) -> None:
 
 
 def test_unknown_style_or_format(tmp_path) -> None:
-    with pytest.raises(CompositionError):
-        _build(tmp_path, style="showroom")
+    with pytest.raises(CompositionError, match="style"):
+        _build(tmp_path, style="neon")
     with pytest.raises(CompositionError):
         _build(tmp_path, fmt="4:5")
 

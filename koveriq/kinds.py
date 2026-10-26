@@ -11,8 +11,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 from koveriq.layout import SceneContext, Text, Tweens, item_beats, num
+from koveriq.styles import Style
 
-BARS = 8  # louvres in the clean transition
+BARS = 8  # louvres in the louvre transition (Clean, Showroom)
 REVEAL_BARS = 10  # louvres over a revealed photo
 CARD_PAD = {"landscape": (44, 52), "portrait": (40, 46), "square": (36, 42)}
 UPSCALE_WARNING = 1.5
@@ -40,47 +41,102 @@ class Resources:
     brand: BrandView
 
 
-class Motion:
-    """Style-specific motion presets, written as literal GSAP calls."""
+Vars = dict[str, Any]
 
-    def __init__(self, style: str, tweens: Tweens, sid: str):
-        self.bold = style == "bold_offer"
+
+@dataclass(frozen=True)
+class MotionPreset:
+    """A style's entrances as literal GSAP (from, to) vars. An entrance lasts
+    at most 0.8 s, an item or a pop at most 0.55 s (LAST_ENTRANCE, LAST_ITEM)."""
+
+    text: tuple[Vars, Vars]
+    card: tuple[Vars, Vars]
+    item: tuple[Vars, Vars]
+    pop: tuple[Vars, Vars]
+    rule: tuple[float, str]  # how a rule draws itself: duration, ease
+    pulse: float  # the scale a pulse peaks at
+    push: float  # the scale a photo pushes in from
+
+
+MOTION: dict[str, MotionPreset] = {
+    "clean": MotionPreset(
+        text=({"opacity": 0, "y": 28}, {"opacity": 1, "y": 0, "duration": 0.7, "ease": "power3.out"}),
+        card=({"opacity": 0, "y": 36}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "power3.out"}),
+        item=({"opacity": 0, "y": 20, "scale": 0.96}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.5, "ease": "power3.out"}),
+        pop=({"opacity": 0, "scale": 0.82}, {"opacity": 1, "scale": 1, "duration": 0.55, "ease": "back.out(1.7)"}),
+        rule=(0.6, "power3.out"),
+        pulse=1.05,
+        push=1.12,
+    ),
+    "bold_offer": MotionPreset(
+        text=({"opacity": 0, "x": -48}, {"opacity": 1, "x": 0, "duration": 0.5, "ease": "power4.out"}),
+        card=({"opacity": 0, "xPercent": -8}, {"opacity": 1, "xPercent": 0, "duration": 0.55, "ease": "power4.out"}),
+        item=({"opacity": 0, "scale": 0.6}, {"opacity": 1, "scale": 1, "duration": 0.45, "ease": "back.out(2)"}),
+        pop=({"opacity": 0, "scale": 0.82}, {"opacity": 1, "scale": 1, "duration": 0.55, "ease": "back.out(2.2)"}),
+        rule=(0.45, "power3.out"),
+        pulse=1.05,
+        push=1.16,
+    ),
+    # Unhurried: a short rise on a long, soft ease, never an overshoot.
+    "showroom": MotionPreset(
+        text=({"opacity": 0, "y": 18}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "power2.out"}),
+        card=({"opacity": 0, "y": 24}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "power2.out"}),
+        item=({"opacity": 0, "y": 12}, {"opacity": 1, "y": 0, "duration": 0.55, "ease": "power2.out"}),
+        pop=({"opacity": 0, "scale": 0.94}, {"opacity": 1, "scale": 1, "duration": 0.55, "ease": "power2.out"}),
+        rule=(0.8, "power2.inOut"),
+        pulse=1.03,
+        push=1.08,
+    ),
+    # Barely there: fades with the smallest lift.
+    "minimal": MotionPreset(
+        text=({"opacity": 0, "y": 12}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "power2.out"}),
+        card=({"opacity": 0, "y": 16}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "power2.out"}),
+        item=({"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.45, "ease": "power2.out"}),
+        pop=({"opacity": 0, "scale": 0.97}, {"opacity": 1, "scale": 1, "duration": 0.45, "ease": "power2.out"}),
+        rule=(0.6, "power2.inOut"),
+        pulse=1.02,
+        push=1.06,
+    ),
+}
+
+
+class Motion:
+    """Style-specific motion presets and transitions, written as literal GSAP calls."""
+
+    def __init__(self, style: Style, tweens: Tweens, sid: str):
+        self.preset = MOTION[style.name]
+        self.transition = style.transition
         self.tw = tweens
         self.sid = sid
 
+    def _enter(self, frm_to: tuple[Vars, Vars], el_id: str, t: float) -> None:
+        frm, to = frm_to
+        self.tw.from_to(f"#{el_id}", dict(frm), dict(to), t)
+
     def text(self, el_id: str, t: float) -> None:
-        if self.bold:
-            self.tw.from_to(f"#{el_id}", {"opacity": 0, "x": -48}, {"opacity": 1, "x": 0, "duration": 0.5, "ease": "power4.out"}, t)
-        else:
-            self.tw.from_to(f"#{el_id}", {"opacity": 0, "y": 28}, {"opacity": 1, "y": 0, "duration": 0.7, "ease": "power3.out"}, t)
+        self._enter(self.preset.text, el_id, t)
 
     def card(self, el_id: str, t: float) -> None:
-        if self.bold:
-            self.tw.from_to(f"#{el_id}", {"opacity": 0, "xPercent": -8}, {"opacity": 1, "xPercent": 0, "duration": 0.55, "ease": "power4.out"}, t)
-        else:
-            self.tw.from_to(f"#{el_id}", {"opacity": 0, "y": 36}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "power3.out"}, t)
+        self._enter(self.preset.card, el_id, t)
 
     def item(self, el_id: str, t: float) -> None:
-        if self.bold:
-            self.tw.from_to(f"#{el_id}", {"opacity": 0, "scale": 0.6}, {"opacity": 1, "scale": 1, "duration": 0.45, "ease": "back.out(2)"}, t)
-        else:
-            self.tw.from_to(f"#{el_id}", {"opacity": 0, "y": 20, "scale": 0.96}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.5, "ease": "power3.out"}, t)
+        self._enter(self.preset.item, el_id, t)
 
     def rule(self, el_id: str, t: float) -> None:
-        self.tw.from_to(f"#{el_id}", {"scaleX": 0}, {"scaleX": 1, "duration": 0.45 if self.bold else 0.6, "ease": "power3.out"}, t)
+        duration, ease = self.preset.rule
+        self.tw.from_to(f"#{el_id}", {"scaleX": 0}, {"scaleX": 1, "duration": duration, "ease": ease}, t)
 
     def pop(self, el_id: str, t: float) -> None:
-        ease = "back.out(2.2)" if self.bold else "back.out(1.7)"
-        self.tw.from_to(f"#{el_id}", {"opacity": 0, "scale": 0.82}, {"opacity": 1, "scale": 1, "duration": 0.55, "ease": ease}, t)
+        self._enter(self.preset.pop, el_id, t)
 
     def pulse(self, el_id: str, t: float) -> None:
-        self.tw.to(f"#{el_id}", {"scale": 1.05, "duration": 0.45, "ease": "sine.inOut", "yoyo": True, "repeat": 1}, t)
+        self.tw.to(f"#{el_id}", {"scale": self.preset.pulse, "duration": 0.45, "ease": "sine.inOut", "yoyo": True, "repeat": 1}, t)
 
     def fade(self, el_id: str, t: float, duration: float = 0.4) -> None:
         self.tw.from_to(f"#{el_id}", {"opacity": 0}, {"opacity": 1, "duration": duration, "ease": "power1.out"}, t)
 
     def photo(self, img_id: str, duration: float, direction: str = "in") -> None:
-        push = 1.16 if self.bold else 1.12
+        push = self.preset.push
         sel = f"#{img_id}"
         if direction == "out":
             self.tw.from_to(sel, {"scale": 1}, {"scale": push - 0.04, "duration": duration, "ease": "none"}, 0)
@@ -95,29 +151,38 @@ class Motion:
         self.tw.from_to(f"#{el_id}", {"y": 0}, {"y": -36, "duration": duration, "ease": "none"}, 0)
 
     def reveal(self, el_id: str, t: float, *, first: bool) -> None:
-        """Open the cover over a photo (louvres, or blocks in bold_offer)."""
-        if self.bold:
+        """Open the cover over a photo: louvres, blocks or a veil that fades."""
+        if self.transition == "blocks":
             # block-b is painted over block-a: it leaves first.
             self.tw.from_to(f"#{el_id} .k-block-b", {"xPercent": 0}, {"xPercent": 102, "duration": 0.7, "ease": "power3.inOut"}, t)
             self.tw.from_to(f"#{el_id} .k-block-a", {"xPercent": 0}, {"xPercent": 102, "duration": 0.7, "ease": "power3.inOut"}, t + 0.12)
+        elif self.transition == "fade":
+            start = 0.55 if first else 1  # the photo shows through at frame 0, so the hook frame is never blank
+            self.tw.from_to(f"#{el_id}", {"opacity": start}, {"opacity": 0, "duration": 0.9, "ease": "power2.inOut"}, t)
         else:
             start = 0.86 if first else 1  # slits at frame 0 so the hook frame is never blank
             self.tw.from_to(f"#{el_id} .k-bar", {"scaleY": start}, {"scaleY": 0, "duration": 0.9, "ease": "power2.inOut", "stagger": 0.05}, t)
 
     def transition_in(self) -> None:
         sel = f"#{self.sid}-tin"
-        if self.bold:
+        if self.transition == "blocks":
             self.tw.from_to(f"{sel} .k-block-b", {"xPercent": 0}, {"xPercent": 102, "duration": 0.45, "ease": "power3.in"}, 0.02)
             self.tw.from_to(f"{sel} .k-block-a", {"xPercent": 0}, {"xPercent": 102, "duration": 0.45, "ease": "power3.in"}, 0.1)
+        elif self.transition == "fade":
+            # The scene rises out of its background colour ...
+            self.tw.from_to(sel, {"opacity": 1}, {"opacity": 0, "duration": 0.4, "ease": "power1.out"}, 0.02)
         else:
             self.tw.from_to(f"{sel} .k-bar", {"scaleY": 1}, {"scaleY": 0, "duration": 0.42, "ease": "power2.out", "stagger": 0.03}, 0.02)
 
     def transition_out(self, duration: float) -> None:
         sel = f"#{self.sid}-tout"
-        if self.bold:
+        if self.transition == "blocks":
             start = duration - 0.52
             self.tw.from_to(f"{sel} .k-block-a", {"xPercent": -102}, {"xPercent": 0, "duration": 0.4, "ease": "power3.out"}, start)
             self.tw.from_to(f"{sel} .k-block-b", {"xPercent": -102}, {"xPercent": 0, "duration": 0.4, "ease": "power3.out"}, start + 0.08)
+        elif self.transition == "fade":
+            # ... and settles back into it just before the cut.
+            self.tw.from_to(sel, {"opacity": 0}, {"opacity": 1, "duration": 0.4, "ease": "power1.in"}, duration - 0.44)
         else:
             start = duration - (0.36 + 0.03 * (BARS - 1)) - 0.03
             self.tw.from_to(f"{sel} .k-bar", {"scaleY": 0}, {"scaleY": 1, "duration": 0.36, "ease": "power2.in", "stagger": 0.03}, start)
@@ -157,8 +222,9 @@ def _t0(flags: dict[str, bool]) -> float:
     return 0.5 if flags["tin"] else 0.2
 
 
-# The out-transition starts 0.6 s before the scene ends (0.52 s in bold_offer)
-# and the longest entrance lasts 0.8 s, so no entrance may start later than this.
+# The out-transition starts 0.6 s before the scene ends (louvres; 0.52 s for
+# blocks, 0.44 s for the fade) and the longest entrance lasts 0.8 s (0.55 s for
+# an item), so no entrance may start later than this.
 LAST_ENTRANCE = 0.62 + 0.8
 LAST_ITEM = 0.62 + 0.55
 

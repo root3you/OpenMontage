@@ -228,7 +228,7 @@ def test_portrait_photo_reveal_moves_up_with_the_band(tmp_path) -> None:
     assert f"top:{1130 - shift}px;width:912px;height:360px" in _read(on / "compositions" / "sc1.html")
 
 
-@pytest.mark.parametrize("style", sorted(STYLES))
+@pytest.mark.parametrize("style", ["bold_offer", "clean", "minimal", "showroom"])
 def test_each_style_has_its_own_caption_look(tmp_path, style) -> None:
     _, out, _ = _build(tmp_path, style=style)
     page = _read(out / "compositions" / "captions.html")
@@ -236,9 +236,19 @@ def test_each_style_has_its_own_caption_look(tmp_path, style) -> None:
     if style == "clean":
         assert '"Montserrat"' in rule and "font-weight: 700" in rule and "text-transform: none" in rule
         assert "rgba(251,248,242,0.94)" in rule  # the paper surface, slightly see-through
-    else:
+    elif style == "bold_offer":
         assert "font-weight: 900" in rule and "text-transform: uppercase" in rule
         assert "rgba(20,22,27,0.86)" in rule and "inset 0 -6px 0" in rule  # dark scrim, accent edge
+    elif style == "showroom":
+        assert '"Lato"' in rule and "font-weight: 700" in rule and "text-transform: none" in rule
+        # an espresso scrim with a brass hairline under the words
+        assert "rgba(34,26,21,0.88)" in rule and "inset 0 -2px 0 #C9A36A" in rule
+        assert "border-radius: 2px" in rule
+    else:
+        assert '"Inter"' in rule and "font-weight: 700" in rule and "text-transform: none" in rule
+        # white, square and flat apart from a faint lift
+        assert "rgba(255,255,255,0.96)" in rule and "border-radius: 0px" in rule
+        assert "inset" not in rule
 
 
 def test_no_words_means_no_caption_layer_and_a_warning(tmp_path) -> None:
