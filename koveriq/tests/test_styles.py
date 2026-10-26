@@ -194,20 +194,39 @@ def test_the_new_styles_have_their_own_end_card(tmp_path, name: str) -> None:
         assert "background: transparent" in pill and "inset 0 0 0 2px var(--ink)" in pill
 
 
+def test_showroom_frames_photos_except_across_the_before_after_wipe(tmp_path) -> None:
+    """The inset frame would ride on the after photo's sliding window."""
+    _, out = _build(tmp_path, "showroom", kinds=["photo_reveal", "before_after", "cta_endcard"])
+    frame = '.k-photo::after { content: ""; position: absolute; inset: 26px;'
+    assert frame in _page(out, "sc1") and ".k-photo::after { display: none; }" not in _page(out, "sc1")
+    assert ".k-photo::after { display: none; }" in _page(out, "sc2")
+
+
+def test_showroom_edges_every_swatch_in_brass(tmp_path) -> None:
+    """A dark finish (walnut, black) still reads on the espresso surface."""
+    _, out = _build(tmp_path, "showroom", kinds=["swatches", "cta_endcard"])
+    dot = re.search(r"\.k-dot \{[^}]*\}", _page(out, "sc1")).group(0)
+    assert "inset 0 0 0 2px var(--line)" in dot
+
+
 @pytest.mark.parametrize("name", ALL_STYLES)
 def test_brand_palette_overrides_every_style(tmp_path, name: str) -> None:
     style = STYLES[name]
-    override = {"accent": "#0B6E4F", "bg": "#FAFAFA"}
-    _, out = _build(tmp_path, name, kinds=["text_card", "offer_card", "cta_endcard"], kit={**brand(), "palette": override})
+    override = {"accent": "#0B6E4F", "bg": "#FAFAFA", "surface": "#FFFDF8"}
+    _, out = _build(tmp_path, name, kinds=["text_card", "offer_card", "cta_endcard"], kit={**brand(), "palette": override}, captions=True)
     page = _page(out, "sc1")
     assert "--accent: #0B6E4F;" in page and "--bg: #FAFAFA;" in page
     palette, errors = merge_palette(style, override)
     assert errors == []
-    # The style's derived colours (decorative pattern, photo shade) follow the brand palette.
+    # The style's derived colours (decorative pattern, photo shade) follow the brand palette ...
     decor_colour, decor_alpha = style.decor
     assert rgba(palette[decor_colour], decor_alpha) in page
     shade_colour, shade_alpha = style.shade
     assert rgba(palette[shade_colour], shade_alpha) in _page(out, "sc1")
+    # ... and so does the caption box.
+    backing, shadow = caps.backing(name, palette)
+    rule = re.search(r"\.k-capbox \{[^}]*\}", (out / "compositions" / "captions.html").read_text(encoding="utf-8")).group(0)
+    assert f"background: {backing};" in rule and f"box-shadow: {shadow};" in rule
     # A clash is a warning on the result, never a silent pass.
     clash, _ = _build(tmp_path / "clash", name, kinds=["text_card", "cta_endcard"], kit={**brand(), "palette": {"ink": "#777777", "bg": "#808080"}})
     assert any(w.startswith("palette_contrast:ink/bg") for w in clash.lint_warnings)

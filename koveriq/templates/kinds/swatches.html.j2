@@ -4,7 +4,7 @@
 .k-swgrid { display: flex; flex-direction: column; align-items: center; gap: 44px; }
 .k-swrow { display: flex; justify-content: center; }
 .k-sw { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.k-dot { position: relative; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(0,0,0,.10), 0 12px 28px rgba(0,0,0,.18); }
+.k-dot { position: relative; border-radius: 50%; box-shadow: {{ "inset 0 0 0 2px var(--line), 0 12px 28px rgba(0,0,0,.35)" if style_name == "showroom" else "inset 0 0 0 2px rgba(0,0,0,.10), 0 12px 28px rgba(0,0,0,.18)" }}; }
 .k-ring { position: absolute; left: -14px; top: -14px; right: -14px; bottom: -14px; border-radius: 50%; border: 6px solid var(--accent); }
 .k-swlabel { color: var(--ink); text-align: center; }
 .k-swwrap > .k-head { text-align: center; }
