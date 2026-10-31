@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "scenes": [
+    {
+      "id": "sc1", "type": "broll", "description": "Slow push in on the bare bay window",
+      "start_seconds": 0.0, "end_seconds": 5.0, "script_section_id": "s1",
+      "role": "before", "kind": "photo_pan",
+      "slots": {"assetId": "a-before-1", "overline": "Before", "headline": "A bay window that needed privacy", "direction": "in", "focus": {"x": 0.5, "y": 0.45}}
+    },
+    {
+      "id": "sc2", "type": "broll", "description": "Wipe from the bare bay to the fitted shutters",
+      "start_seconds": 5.0, "end_seconds": 11.0, "script_section_id": "s2",
+      "role": "reveal", "kind": "before_after",
+      "slots": {"beforeAssetId": "a-before-1", "afterAssetId": "a-after-1", "beforeLabel": "Before", "afterLabel": "After", "headline": "Full-height plantation shutters"}
+    },
+    {
+      "id": "sc3", "type": "broll", "description": "Pan across the closed louvres",
+      "start_seconds": 11.0, "end_seconds": 16.5, "script_section_id": "s3",
+      "role": "details", "kind": "photo_pan",
+      "slots": {"assetId": "a-after-1", "headline": "Light or privacy, your choice", "direction": "left"}
+    },
+    {
+      "id": "sc4", "type": "broll", "description": "Pan across the café style shutters",
+      "start_seconds": 16.5, "end_seconds": 21.5, "script_section_id": "s4",
+      "role": "details", "kind": "photo_pan",
+      "slots": {"assetId": "a-after-2", "headline": "Café style shutters", "subline": "Bright rooms, screened from the street", "direction": "right"}
+    },
+    {
+      "id": "sc5", "type": "broll", "description": "Town card for Guildford",
+      "start_seconds": 21.5, "end_seconds": 25.0, "script_section_id": "s5",
+      "role": "town_card", "kind": "town_card",
+      "slots": {"overline": "Recently fitted in", "town": "Guildford", "subline": "Plantation and café style shutters"}
+    },
+    {
+      "id": "sc6", "type": "broll", "description": "End card with the call to action",
+      "start_seconds": 25.0, "end_seconds": 30.0, "script_section_id": "s6",
+      "role": "cta", "kind": "cta_endcard",
+      "slots": {"overline": "Free home survey", "cta": "Book your free home survey", "steps": ["Measure", "Advise", "Fit"], "assetId": "a-after-2"}
+    }
+  ]
+}
