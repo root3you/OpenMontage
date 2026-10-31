@@ -8,9 +8,9 @@ stays small and its cached system prefix stays stable.
 | Skill | Pipeline | Stages |
 |---|---|---|
 | `product-promo.md` | `pipeline_defs/koveriq-product-promo.yaml` | all six (`idea` is written by runner code) |
+| `install-showcase.md` | `pipeline_defs/koveriq-install-showcase.yaml` | all six (`idea` is written by runner code) |
 
-Campaign ad, install showcase and explainer skills arrive with their pipelines
-(Phase 3).
+Campaign ad and explainer skills arrive with their pipelines.
 
 ## How the worker uses them
 
