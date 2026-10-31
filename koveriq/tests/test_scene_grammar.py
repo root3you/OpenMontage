@@ -108,3 +108,48 @@ def test_word_count_follows_the_pace_rule() -> None:
     assert word_count_errors(script, PROMO, 30)
     script = {"sections": [{"text": " ".join(["word"] * 60)}]}
     assert word_count_errors(script, PROMO, 30)
+
+INSTALL = "install_showcase"
+GOOD_INSTALL_30 = ["photo_pan", "before_after", "photo_pan", "photo_pan", "town_card", "cta_endcard"]
+
+
+def install_plan(kinds: list[str]) -> dict:
+    """plan_for() tags product-promo roles on photo kinds; an install plan infers its own."""
+    plan, _, _ = plan_for(kinds)
+    for scene in plan["scenes"]:
+        scene.pop("role", None)
+    return plan
+
+
+def test_install_showcase_grammar_order() -> None:
+    grammar = load_grammar()["grammars"][INSTALL]
+    assert [r["role"] for r in grammar["roles"]] == ["before", "reveal", "details", "town_card", "cta"]
+    by_role = {r["role"]: r for r in grammar["roles"]}
+    assert by_role["town_card"]["kinds"] == ["town_card"]
+    assert (by_role["town_card"]["min"], by_role["town_card"]["max"]) == (1, 1)
+    assert by_role["details"]["max"] == 2
+
+
+def test_install_showcase_lengths_match_the_worker_and_koveriq() -> None:
+    lengths = load_grammar()["grammars"][INSTALL]["lengths"]
+    assert lengths == {
+        "15": {"scenes": {"min": 4, "max": 5}, "seconds": {"min": 12, "max": 21}, "words": {"min": 35, "max": 40}},
+        "30": {"scenes": {"min": 4, "max": 7}, "seconds": {"min": 24, "max": 42}, "words": {"min": 69, "max": 81}},
+        "60": {"scenes": {"min": 5, "max": 9}, "seconds": {"min": 48, "max": 84}, "words": {"min": 138, "max": 162}},
+    }
+
+
+def test_a_good_30s_install_showcase_passes() -> None:
+    plan = install_plan(GOOD_INSTALL_30)
+    assert grammar_errors(plan, INSTALL, 30) == []
+    assert infer_roles(plan, INSTALL) == ["before", "reveal", "details", "details", "town_card", "cta"]
+
+
+def test_an_install_showcase_needs_a_town_card() -> None:
+    errors = grammar_errors(install_plan(["photo_pan", "before_after", "photo_pan", "cta_endcard"]), INSTALL, 30)
+    assert any("town_card" in e for e in errors)
+
+
+def test_a_15s_install_showcase_has_at_most_5_scenes() -> None:
+    errors = grammar_errors(install_plan(GOOD_INSTALL_30), INSTALL, 15)
+    assert any("needs 4-5 scenes" in e for e in errors)
