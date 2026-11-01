@@ -14,8 +14,10 @@ import pytest
 
 from koveriq.checkpoints import (
     APPROVAL_POLICY,
+    INSTALL_SHOWCASE_PIPELINE,
     PRODUCT_PROMO_PIPELINE,
     approver,
+    pipeline_for,
     write_brief_checkpoint,
     write_stage_checkpoint,
 )
@@ -164,3 +166,46 @@ def test_next_stage_checkpoint_writes_after_the_brief(tmp_path: Path) -> None:
     checkpoint = json.loads(path.read_text(encoding="utf-8"))
     assert checkpoint["human_approved"] is True
     assert checkpoint["metadata"]["approved_by"] == "koveriq:brief:u-123"
+
+
+@pytest.fixture()
+def install_manifest() -> dict:
+    return load_pipeline(INSTALL_SHOWCASE_PIPELINE)
+
+
+def test_install_manifest_has_the_koveriq_stages_and_no_human_gates(install_manifest: dict) -> None:
+    assert get_stage_order(install_manifest) == STAGES
+    assert get_pipeline_stages(INSTALL_SHOWCASE_PIPELINE) == STAGES
+    assert not {s["name"] for s in install_manifest["stages"]} & {"research", "proposal"}
+    assert all(s["human_approval_default"] is False for s in install_manifest["stages"])
+    assert install_manifest["orchestration"]["max_revisions_per_stage"] == 3
+    assert install_manifest["extensions"] == {
+        "custom_scripts": False,
+        "custom_playbooks": False,
+        "custom_skills": False,
+        "custom_tools": False,
+    }
+
+
+def test_every_install_skill_exists(install_manifest: dict) -> None:
+    refs = set(install_manifest["required_skills"]) | {s["skill"] for s in install_manifest["stages"]}
+    assert "koveriq/install-showcase" in refs
+    for ref in refs:
+        assert (REPO_ROOT / "skills" / f"{ref}.md").is_file(), ref
+
+
+def test_install_prerequisites_accept_a_supplied_brief(tmp_path: Path) -> None:
+    init_project("vid", title="Install", pipeline_type=INSTALL_SHOWCASE_PIPELINE, pipeline_dir=tmp_path)
+    path = write_brief_checkpoint(
+        tmp_path, "vid", _brief(), user_id="u-123", pipeline_type=INSTALL_SHOWCASE_PIPELINE
+    )
+    assert json.loads(path.read_text(encoding="utf-8"))["pipeline_type"] == INSTALL_SHOWCASE_PIPELINE
+    _enforce_stage_prerequisites(tmp_path, "vid", INSTALL_SHOWCASE_PIPELINE, "script", "completed")
+
+
+def test_pipeline_for_maps_each_koveriq_video_type() -> None:
+    assert pipeline_for("product_promo") == PRODUCT_PROMO_PIPELINE
+    assert pipeline_for("install_showcase") == INSTALL_SHOWCASE_PIPELINE == "koveriq-install-showcase"
+    # Types without a pipeline of their own keep the product promo's six stages.
+    assert pipeline_for("explainer") == PRODUCT_PROMO_PIPELINE
+    assert pipeline_for("campaign_ad") == PRODUCT_PROMO_PIPELINE

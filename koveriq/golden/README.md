@@ -45,3 +45,24 @@ accept only tenant-owned or KoverIQ-original assets and refuse CC BY-SA (spec
 | `a-living.jpg` | White California shutters fitted to living room windows in Toronto | Gtashutters.com | https://commons.wikimedia.org/wiki/File:White_California_shutters_fitted_to_living_room_windows_in_Toronto.jpg | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | Cropped to the left window and resized to 1400×1852 |
 
 The modified photos are offered under the same licence (CC BY-SA 4.0).
+
+## Install showcase golden
+
+    make golden-install   # or: python -m koveriq.golden.install [--update-reference]
+
+The install-showcase plan (before → reveal → details → town card → CTA, 30 s)
+on three synthetic photos, built in 9:16 and 1:1 (clean), linted (0 errors),
+snapshotted at 2.5, 8, 23.25 and 27.5 s and compared with SSIM ≥ 0.98 against
+`install-showcase/reference/` (luma, half size), then rendered and checked
+with ffprobe (30 s ± 0.1 s, 1080×1920 and 1080×1080). There is no narration,
+so the frames depend on the templates alone. Results go to `out/install/`.
+
+References are made with `--update-reference` and compare only on the platform
+that made them (`reference/meta.json`); elsewhere the SSIM step is reported as
+skipped. Remake them, and look at them, whenever a template change is meant to
+change the picture.
+
+The photos are KoverIQ-original artwork drawn by `install_photos.py` (licence
+`koveriq_original`, no photograph, no person, no house number). Regenerate them
+with `python -m koveriq.golden.install_photos`; a test fails if the committed
+files differ from what the generator draws.

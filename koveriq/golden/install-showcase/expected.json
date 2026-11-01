@@ -1,0 +1,11 @@
+{
+  "style": "clean",
+  "formats": ["9:16", "1:1"],
+  "sizes": {"9:16": [1080, 1920], "1:1": [1080, 1080]},
+  "durationMs": 30000,
+  "hookTimeMs": 2500,
+  "fps": 30,
+  "toleranceSeconds": 0.1,
+  "snapshotTimes": [2.5, 8.0, 23.25, 27.5],
+  "ssimMin": 0.98
+}

@@ -4,8 +4,9 @@
 #   make koveriq-test     unit tests for the koveriq package (no browser, no network)
 #   make koveriq-lint     `hyperframes lint` over every style x format with all kinds
 #   make golden           deterministic golden: build, lint, snapshot x3, render, ffprobe
+#   make golden-install   install-showcase golden: 9:16 + 1:1, lint, snapshot + SSIM, render, ffprobe
 
-.PHONY: koveriq-vendor koveriq-test koveriq-lint golden
+.PHONY: koveriq-vendor koveriq-test koveriq-lint golden golden-install
 
 koveriq-vendor: ensure-venv
 	@$(RUN_PYTHON) -c "from koveriq.vendor import verified_gsap; verified_gsap()" 2>/dev/null \
@@ -22,3 +23,8 @@ golden: ensure-venv koveriq-vendor
 	@command -v ffprobe >/dev/null || { echo "ffprobe is required"; exit 1; }
 	@command -v npx >/dev/null || { echo "node/npx is required"; exit 1; }
 	time $(RUN_PYTHON) -m koveriq.golden $(GOLDEN_ARGS)
+
+golden-install: ensure-venv koveriq-vendor
+	@command -v ffprobe >/dev/null || { echo "ffprobe is required"; exit 1; }
+	@command -v npx >/dev/null || { echo "node/npx is required"; exit 1; }
+	time $(RUN_PYTHON) -m koveriq.golden.install $(GOLDEN_ARGS)

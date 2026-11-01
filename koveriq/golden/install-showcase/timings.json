@@ -1,0 +1,8 @@
+{
+  "sc1": {"startMs": 0, "endMs": 5000, "words": []},
+  "sc2": {"startMs": 5000, "endMs": 11000, "words": []},
+  "sc3": {"startMs": 11000, "endMs": 16500, "words": []},
+  "sc4": {"startMs": 16500, "endMs": 21500, "words": []},
+  "sc5": {"startMs": 21500, "endMs": 25000, "words": []},
+  "sc6": {"startMs": 25000, "endMs": 30000, "words": []}
+}

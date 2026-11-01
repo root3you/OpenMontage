@@ -21,7 +21,21 @@ from typing import Any, Optional
 from lib.checkpoint import write_checkpoint
 
 PRODUCT_PROMO_PIPELINE = "koveriq-product-promo"
+INSTALL_SHOWCASE_PIPELINE = "koveriq-install-showcase"
 APPROVAL_POLICY = "brief-preauth"
+
+# KoverIQ video type -> its pipeline manifest. A type without a manifest of
+# its own yet (campaign ad, explainer) is recorded under the product promo's,
+# which has the same six stages and no human gate.
+PIPELINES = {
+    "product_promo": PRODUCT_PROMO_PIPELINE,
+    "install_showcase": INSTALL_SHOWCASE_PIPELINE,
+}
+
+
+def pipeline_for(video_type: str) -> str:
+    """The pipeline manifest a render of this KoverIQ video type is checkpointed under."""
+    return PIPELINES.get(video_type, PRODUCT_PROMO_PIPELINE)
 
 
 def approver(user_id: str) -> str:

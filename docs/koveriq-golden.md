@@ -46,8 +46,10 @@ their clipping frames (intended).
 
 - Loudness normalisation to −16 LUFS is the render stage's FFmpeg packaging
   step (spec §5.4); the composition mixes the narration at its source level.
-- Frame comparison (SSIM ≥ 0.98, spec §13.5) is not part of this golden; the
-  three snapshots in `out/snapshots/` are the natural references for it.
+- Frame comparison (SSIM ≥ 0.98, spec §13.5) is part of the install-showcase
+  golden (`make golden-install`, see `koveriq/golden/README.md`), whose frames
+  depend on the templates alone. This product golden still records snapshots
+  without comparing them.
 - Run with `KOVERIQ_HYPERFRAMES_VERSION` unset to stay on the pinned 0.8.185;
   `koveriq.hyperframes` switches off telemetry, update checks and auto-install.
 

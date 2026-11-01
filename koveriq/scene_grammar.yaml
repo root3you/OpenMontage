@@ -30,3 +30,16 @@ grammars:
       "30": {scenes: {min: 5, max: 7}, seconds: {min: 24, max: 42}, words: {min: 69, max: 81}}
       "45": {scenes: {min: 6, max: 8}, seconds: {min: 36, max: 63}, words: {min: 104, max: 122}}
       "60": {scenes: {min: 7, max: 9}, seconds: {min: 48, max: 84}, words: {min: 138, max: 162}}
+
+  install_showcase:
+    description: before -> reveal -> details -> town card -> CTA
+    roles:
+      - {role: before, kinds: [photo_pan, before_after], min: 1, max: 1}
+      - {role: reveal, kinds: [photo_reveal, before_after], min: 1, max: 1}
+      - {role: details, kinds: [photo_pan, text_card], min: 0, max: 2}
+      - {role: town_card, kinds: [town_card], min: 1, max: 1}
+      - {role: cta, kinds: [cta_endcard], min: 1, max: 1}
+    lengths:
+      "15": {scenes: {min: 4, max: 5}, seconds: {min: 12, max: 21}, words: {min: 35, max: 40}}
+      "30": {scenes: {min: 4, max: 7}, seconds: {min: 24, max: 42}, words: {min: 69, max: 81}}
+      "60": {scenes: {min: 5, max: 9}, seconds: {min: 48, max: 84}, words: {min: 138, max: 162}}

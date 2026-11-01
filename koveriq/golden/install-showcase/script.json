@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "title": "Plantation shutters fitted in Guildford",
+  "total_duration_seconds": 30,
+  "sections": [
+    {"id": "s1", "text": "This bay window let in harsh morning glare and gave the room very little privacy.", "start_seconds": 0.0, "end_seconds": 5.0},
+    {"id": "s2", "text": "Now full-height plantation shutters fill the bay, and the louvres tilt for soft, even light.", "start_seconds": 5.0, "end_seconds": 11.0},
+    {"id": "s3", "text": "Close them for complete privacy in the evening, or fold the panels back to open the view.", "start_seconds": 11.0, "end_seconds": 16.5},
+    {"id": "s4", "text": "Café style shutters on the lower half keep the room bright while screening the street.", "start_seconds": 16.5, "end_seconds": 21.5},
+    {"id": "s5", "text": "Another home transformed by our team in Guildford.", "start_seconds": 21.5, "end_seconds": 25.0},
+    {"id": "s6", "text": "Book your free home survey today.", "start_seconds": 25.0, "end_seconds": 30.0}
+  ]
+}
